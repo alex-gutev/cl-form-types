@@ -167,28 +167,59 @@
 
 ;;; Special Form Types
 
-(defun special-form-type (operator operands env)
-  "Determine the type of a special form.
+(defgeneric special-form-type (operator operands env)
+  (:documentation
+   "Determine the type of a special form.
 
-   OPERATOR is the form operator, which must name a special operator.
+    OPERATOR is the form operator, which must name a special operator.
 
-   OPERANDS is the for argument list.
+    OPERANDS is the for argument list.
 
-   ENV is the environment in which the form is found."
+    ENV is the environment in which the form is found.")
 
-  (match (cons operator operands)
-    ((list 'cl:the type _)
-     type)
+  (:method (operator operands env)
+    (declare (ignore operator operands env))
+    t))
 
-    ((list* 'cl:progn forms)
-     (form-type (lastcar forms) env))
-
-    ((list 'cl:quote thing)
+(defmethod special-form-type ((operator (eql 'cl:quote)) operands env)
+  (match operands
+    ((list thing)
      `(eql ,thing))
 
-    ((list* 'cl:setq (guard operands
-			    (and (proper-list-p operands)
-				 (evenp (length operands)))))
-     (form-type (lastcar operands) env))
+    (_ t)))
+
+(defmethod special-form-type ((operator (eql 'cl:the)) operands env)
+  (match operands
+    ((list type _)
+     type)
 
     (_ t)))
+
+(defmethod special-form-type ((operator (eql 'cl:setq)) operands env)
+  (if (and (proper-list-p operands)
+	   (evenp (length operands)))
+
+      (form-type (lastcar operands) env)
+      t))
+
+(defmethod special-form-type ((operator (eql 'cl:progn)) operands env)
+  (typecase operands
+    (proper-list
+     (form-type (lastcar operands) env))
+
+    (otherwise t)))
+
+(defmethod special-form-type ((operator (eql 'cl:locally)) operands env)
+  (typecase operands
+    (proper-list
+     (multiple-value-bind (body declarations)
+	 (parse-body operands :documentation nil)
+
+       (form-type
+	(lastcar body)
+	(augment-environment
+	 env
+	 :declare
+	 (mappend #'cdr declarations)))))
+
+    (otherwise t)))
