@@ -54,7 +54,8 @@
 		:serial t
 		:components
 		((:file "test")
-		 (:file "basic-forms"))))
+		 (:file "basic-forms")
+		 (:file "special-forms"))))
 
   :perform (test-op (o s)
 		    (uiop:symbol-call :cl-form-types/test :test-cl-form-types)))
