@@ -225,16 +225,41 @@
     (otherwise t)))
 
 (defmethod special-form-type ((operator (eql 'cl:locally)) operands env)
-  (typecase operands
-    (proper-list
-     (multiple-value-bind (body declarations)
-	 (parse-body operands :documentation nil)
+  (labels ((extract-vars (decl-expression)
+	     "Extract variable names from DECLARE TYPE expressions."
 
-       (form-type
-	(lastcar body)
-	(augment-environment
-	 env
-	 :declare
-	 (mappend #'cdr declarations)))))
+	     (mappend #'extract-var (cdr decl-expression)))
 
-    (otherwise t)))
+	   (extract-funcs (decl-expression)
+	     "Extract function names from DECLARE FTYPE expressions."
+
+	     (mappend #'extract-func (cdr decl-expression)))
+
+	   (extract-var (decl)
+	     "Extract variable names from TYPE declarations."
+
+	     (match decl
+	       ((list* 'type _ vars)
+		vars)))
+
+	   (extract-func (decl)
+	     "Extract function names from FTYPE declarations."
+
+	     (match decl
+	       ((list* 'ftype _ fns)
+		fns))))
+
+    (typecase operands
+      (proper-list
+       (multiple-value-bind (body declarations)
+	   (parse-body operands :documentation nil)
+
+	 (form-type
+	  (lastcar body)
+	  (augment-environment
+	   env
+	   :variable (mappend #'extract-vars declarations)
+	   :function (mappend #'extract-funcs declarations)
+	   :declare (mappend #'cdr declarations)))))
+
+      (otherwise t))))
