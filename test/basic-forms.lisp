@@ -138,7 +138,9 @@
     (declare (ftype (function (integer integer) integer) add))
 
     (is-form-type number (inc x))
-    (is-form-type integer (add (inc x) y))))
+    (is-form-type integer (add (inc x) y))
+
+    (is-form-type t (unknown-function a b c) :strict t)))
 
 (test macro-form-type
   "Test FORM-TYPE on macro forms"
