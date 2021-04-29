@@ -27,8 +27,11 @@
   (:use :cl-environments-cl
 	:cl-form-types
 	:alexandria
+	:optima
 
 	:fiveam)
+
+  (:shadowing-import-from :fiveam :fail)
 
   (:export :cl-form-types
 	   :test-cl-form-types
@@ -82,11 +85,32 @@
    If STRICT is true the type returned by FORM-TYPE must equal TYPE
    exactly, by EQUAL."
 
-  `(is (,(if strict 'equal 'form-type=)
-	 ',type
-	 ',(form-type form env))))
+  (let ((form-type (form-type form env)))
+    `(is (,(if strict 'equal 'form-type=)
+	   ',type
+	   ',form-type)
+
+	 "~%Form type of ~s is:~%~%~s~%~%~2T which is not a subtype of:~%~%~s"
+	 ',form ',form-type ',type)))
 
 (defun form-type= (expected actual)
   "Check whether ACTUAL is a subtype of EXPECTED."
 
-  (subtypep actual expected))
+  (labels ((values-type= (expected actual)
+	     (multiple-value-match (values expected actual)
+	       (('&rest '&rest) t)
+	       ((_ _) (type-equal? expected actual))))
+
+	   (type-equal? (expected actual)
+	     (subtypep actual expected)))
+
+    (multiple-value-match (values expected actual)
+      (((list* 'values expected)
+	(list* 'values actual))
+       (every #'values-type= expected actual))
+
+      ((_ (list* 'values actual _))
+       (type-equal? expected actual))
+
+      ((_ _)
+       (type-equal? expected actual)))))

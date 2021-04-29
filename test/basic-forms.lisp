@@ -55,6 +55,17 @@
 
 (define-symbol-macro character-x #\x)
 
+(defun inc (n)
+  (1+ n))
+
+(declaim (ftype (function (number) number) inc))
+
+(defmacro pass-form (form)
+  form)
+
+(defmacro inc-twice (thing)
+  `(inc (inc ,thing)))
+
 
 ;;; Literal Constant Tests
 
@@ -116,3 +127,31 @@
     (is-form-type (eql #\x) character-x)
     (is-form-type (eql 10) number-10)
     (is-form-type string the-global-var)))
+
+
+;;; List Form Tests
+
+(test function-call-type
+  "Test FORM-TYPE on function call expressions"
+
+  (flet ((add (a b) (+ a b)))
+    (declare (ftype (function (integer integer) integer) add))
+
+    (is-form-type number (inc x))
+    (is-form-type integer (add (inc x) y))))
+
+(test macro-form-type
+  "Test FORM-TYPE on macro forms"
+
+  (macrolet ((local-pass (form)
+	       `(pass-form ,form)))
+
+    (symbol-macrolet ((inc-100 (inc 100)))
+
+      (is-form-type string (pass-form "hello world"))
+      (is-form-type (eql 10) (pass-form +a-global-constant+))
+      (is-form-type number (inc-twice (+ x y)))
+      (is-form-type number inc-100)
+      (is-form-type number (local-pass inc-100))
+      (is-form-type string (local-pass "Hello"))
+      (is-form-type number (local-pass (inc-twice (* inc-100 z)))))))
