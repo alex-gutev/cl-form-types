@@ -196,12 +196,33 @@
     (declare (ignore operator operands env))
     t))
 
+;;;; QUOTE and FUNCTION
+
 (defmethod special-form-type ((operator (eql 'cl:quote)) operands env)
   (match operands
     ((list thing)
      (constant-type thing))
 
     (_ t)))
+
+(defmethod special-form-type ((operator (eql 'cl:function)) operands env)
+  (match operands
+    ((list name)
+     (multiple-value-bind (type local decl)
+	 (function-information name env)
+
+       (declare (ignore local))
+
+       (case type
+	 (:function
+	  (or (cdr (assoc 'ftype decl))
+	      'cl:function))
+
+	 (otherwise t))))
+
+    (_ 'cl:function)))
+
+;;;; THE
 
 (defmethod special-form-type ((operator (eql 'cl:the)) operands env)
   (match operands
@@ -210,6 +231,9 @@
 
     (_ t)))
 
+
+;;;; SETQ
+
 (defmethod special-form-type ((operator (eql 'cl:setq)) operands env)
   (if (and (proper-list-p operands)
 	   (evenp (length operands)))
@@ -217,12 +241,60 @@
       (form-type (lastcar operands) env)
       t))
 
+;;;; Conditionals
+
+(defmethod special-form-type ((operator (eql 'cl:if)) operands env)
+  (match operands
+    ((list _ if-true if-false)
+     `(or ,(form-type if-true env)
+	  ,(form-type if-false env)))
+
+    ((list _ if-true)
+     `(or ,(form-type if-true env) null))
+
+    (_ t)))
+
+;;;; Multiple value call and PROG1
+
+(defmethod special-form-type ((operator (eql 'cl:multiple-value-prog1)) operands env)
+  (match operands
+    ((list first-form _)
+     (form-type first-form env))
+
+    (_ t)))
+
+;;;; Grouping Forms
+
 (defmethod special-form-type ((operator (eql 'cl:progn)) operands env)
   (typecase operands
     (proper-list
      (form-type (lastcar operands) env))
 
     (otherwise t)))
+
+(defmethod special-form-type ((operator (eql 'cl:progv)) operands env)
+  (match operands
+    ((list* _ _ (and (type proper-list) forms))
+     (form-type (lastcar forms) env))
+
+    (_ t)))
+
+(defmethod special-form-type ((operator (eql 'cl:eval-when)) operands env)
+  (match operands
+    ((list* situation (and (type proper-list) forms))
+     (if (or (member :execute situation)
+	     (member 'eval situation))
+	 (form-type (lastcar forms) env)
+	 'null))
+
+    (_ t)))
+
+(defmethod special-form-type ((operator (eql 'cl:unwind-protect)) operands env)
+  (match operands
+    ((list* form _)
+     (form-type form env))
+
+    (_ t)))
 
 (defmethod special-form-type ((operator (eql 'cl:locally)) operands env)
   (labels ((extract-vars (decl-expression)
@@ -263,3 +335,50 @@
 	   :declare (mappend #'cdr declarations)))))
 
       (otherwise t))))
+
+;;;; Control Flow Context
+
+(defmethod special-form-type ((operator (eql 'cl:tagbody)) operands env)
+  (declare (ignore operands env))
+  nil)
+
+;;;; Control Transfer Forms
+
+;; These all return NIL since they do not return any value, but rather
+;; execute a jump.
+
+(defmethod special-form-type ((operator (eql 'cl:go)) operands env)
+  (declare (ignore operands env))
+  nil)
+
+(defmethod special-form-type ((operator (eql 'cl:throw)) operands env)
+  (declare (ignore operands env))
+  nil)
+
+(defmethod special-form-type ((operator (eql 'cl:return-from)) operands env)
+  (declare (ignore operands env))
+  nil)
+
+;;;; Local Macro Definitions
+
+(defmethod special-form-type ((operator (eql 'cl:macrolet)) operands env)
+  (match operands
+    ((list* (and (type proper-list) macros)
+	    (and (type proper-list) body))
+
+     (form-type
+      (lastcar body)
+      (augment-environment env :macro (mapcar (rcurry #'enclose-macro env) macros))))
+
+    (_ t)))
+
+(defmethod special-form-type ((operator (eql 'cl:symbol-macrolet)) operands env)
+  (match operands
+    ((list* (and (type proper-list) symbol-macros)
+	    (and (type proper-list) body))
+
+     (form-type
+      (lastcar body)
+      (augment-environment env :symbol-macro symbol-macros)))
+
+    (_ t)))
