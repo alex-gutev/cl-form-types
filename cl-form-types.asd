@@ -39,4 +39,22 @@
   :depends-on (#:cl-environments
 	       #:alexandria
 	       #:anaphora
-	       #:optima))
+	       #:optima)
+
+  :in-order-to ((asdf:test-op (asdf:test-op :cl-form-types/test))))
+
+(asdf:defsystem #:cl-form-types/test
+  :description "Tests for cl-form-types"
+  :author "Alexander Gutev"
+  :license "MIT"
+  :serial t
+  :depends-on (#:cl-form-types #:fiveam)
+  :components ((:module
+		"test"
+		:serial t
+		:components
+		((:file "test")
+		 (:file "basic-forms"))))
+
+  :perform (test-op (o s)
+		    (uiop:symbol-call :cl-form-types/test :test-cl-form-types)))
