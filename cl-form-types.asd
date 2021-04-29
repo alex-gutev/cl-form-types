@@ -24,7 +24,7 @@
 ;;;; OTHER DEALINGS IN THE SOFTWARE.
 
 (asdf:defsystem #:cl-form-types
-  :description "Describe cl-form-types here"
+  :description "Library for determining types of Common Lisp forms."
   :author "Alexander Gutev"
   :license  "MIT"
   :version "0.0.1"
