@@ -184,7 +184,7 @@
 (defmethod special-form-type ((operator (eql 'cl:quote)) operands env)
   (match operands
     ((list thing)
-     `(eql ,thing))
+     (constant-type thing))
 
     (_ t)))
 
