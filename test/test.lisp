@@ -85,7 +85,7 @@
    If STRICT is true the type returned by FORM-TYPE must equal TYPE
    exactly, by EQUAL."
 
-  (let ((form-type (form-type form env)))
+  (let ((form-type (nth-form-type form env)))
     `(is (,(if strict 'equal 'form-type=)
 	   ',type
 	   ',form-type)
