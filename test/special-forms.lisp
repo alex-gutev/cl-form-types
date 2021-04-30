@@ -942,3 +942,58 @@
       (cl:symbol-macrolet ()
 	(pprint "In SYMBOL-MACROLET")
 	(thing seq)))))
+
+
+;;; Local Variable Binding Form Types
+
+(test let-forms
+  "Test FORM-TYPE on LET forms"
+
+  (is-form-type (eql 10)
+    (cl:let ()
+      (pprint "Hello")
+      10))
+
+  (is-form-type string
+    (cl:let ((name "Bob"))
+      (declare (type string name))
+      (format t "Hello: ~a~%" name)
+      name)))
+
+(test let-variable-forms
+  "Test FORM-TYPE on LET forms which return variable"
+
+  (let ((x 1050))
+    (declare (type number x)
+	     (ignorable x))
+
+    (symbol-macrolet ((greeting "Welcome"))
+
+      (is-form-type number
+	(cl:let ((y 10))
+	  (pprint (+ x y))
+	  (pass-form x)))
+
+      (is-form-type string
+	(cl:let ((x "x"))
+	  (declare (type string x))
+	  (format t "X: ~a" x)
+	  x))
+
+      (is-form-type string
+	(cl:let ((x 'x))
+	  (format t "X: ~a" x)
+	  greeting)))))
+
+(test let-function-forms
+  "Test FORM-TYPE on LET forms which return function expression"
+
+  (flet ((thing (seq) (reverse seq)))
+    (declare (ftype (function (sequence) sequence) thing))
+
+    (is-form-type sequence
+      (cl:let ((x 1) (y 2))
+	(declare (type integer x y))
+	(pprint x)
+	(pprint y)
+	(thing (list x y))))))
