@@ -127,6 +127,52 @@
 	(is-form-type function (func unknown-func) :strict t)))))
 
 
+;;; IF Form Tests
+
+(test if-forms
+  "Test FORM-TYPE on IF forms"
+
+  (is-form-type (or (eql 100) string)
+    (if (test something)
+	100
+	"hello world")))
+
+(test if-no-else-forms
+  "Test FORM-TYPE on IF forms with else branch"
+
+  (is-form-type (or integer null)
+    (if (plusp x) (the integer x))))
+
+(test if-variable-forms
+  "Test FORM-TYPE on IF forms which return value of variable"
+
+  (let ((varx 35))
+    (declare (type integer varx)
+	     (ignorable varx))
+
+    (symbol-macrolet ((greeting "hello"))
+
+      (is-form-type (or integer null)
+	(if (test x) varx))
+
+      (is-form-type (or integer string)
+	(if (test x) varx greeting)))))
+
+(test if-list-forms
+  "Test FORM-TYPE on IF forms which return function call expression"
+
+  (flet ((flip (x) (reverse x))
+	 (mul (y z) (* y z)))
+    (declare (ftype (function (string) string) flip)
+	     (ftype (function (number number) number) mul))
+
+    (is-form-type (or string number)
+      (if (evenp a) (flip name) (mul a b)))
+
+    (is-form-type (or number null)
+      (if (evenp a) (mul a b)))))
+
+
 ;;; PROGN Form Tests
 
 (test progn-forms
