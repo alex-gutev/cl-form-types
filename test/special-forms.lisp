@@ -99,6 +99,34 @@
       (is-form-type list (my-quote '(a b c d))))))
 
 
+;;; FUNCTION FORM Tests
+
+(test function-forms
+  "Test FORM-TYPE on FUNCTION forms"
+
+  (flet ((mul (x y) (* x y)))
+    (declare (ftype (function (integer integer) integer) mul))
+
+    (is-form-type (function (integer integer) integer) #'mul)
+    (is-form-type function #'unknown-function :strict t)))
+
+(test macro-function-forms
+  "Test FORM-TYPE on macros which expand to FUNCTION forms"
+
+  (flet ((flip (x) (/ x)))
+    (declare (ftype (function (integer) number) flip))
+
+    (macrolet ((func (name)
+		 `(pass-form #',name)))
+
+      (symbol-macrolet ((func-flip #'flip))
+
+	(is-form-type (function (integer) number) (pass-form #'flip))
+	(is-form-type (function (integer) number) (func flip))
+	(is-form-type (function (integer) number) func-flip)
+	(is-form-type function (func unknown-func) :strict t)))))
+
+
 ;;; PROGN Form Tests
 
 (test progn-forms
