@@ -839,7 +839,7 @@
   "Test FORM-TYPE on MACROLET forms"
 
   (is-form-type string
-    (macrolet ((local-mac (operator &rest operands)
+    (cl:macrolet ((local-mac (operator &rest operands)
 		 `(pass-form (,operator ,@operands)))
 	       (wrap-number (form)
 		 `(the number ,form)))
@@ -849,7 +849,7 @@
       (local-mac the string name)))
 
   (is-form-type number
-    (macrolet ((local-mac (operator &rest operands)
+    (cl:macrolet ((local-mac (operator &rest operands)
 		 `(pass-form (,operator ,@operands)))
 	       (wrap-number (form)
 		 `(the number ,form)))
@@ -866,14 +866,14 @@
     (symbol-macrolet ((person-name "Joe"))
 
       (is-form-type number
-	(macrolet ((local-pass (form)
+	(cl:macrolet ((local-pass (form)
 		     `(pass-form ,form)))
 
 	  (pprint "In MACROLET")
 	  (local-pass x)))
 
       (is-form-type string
-	(macrolet ((local-mac (form)
+	(cl:macrolet ((local-mac (form)
 		     `(pass-form ,form)))
 
 	  (pprint "In MACROLET")
@@ -889,7 +889,7 @@
 	     (ftype (function (sequence) sequence) thing))
 
     (is-form-type integer
-      (macrolet ((thing (form)
+      (cl:macrolet ((thing (form)
 		   `(pass-form ,form)))
 
 	(pprint "In MACROLET")
