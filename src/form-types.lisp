@@ -214,7 +214,7 @@
        (declare (ignore local))
 
        (case type
-	 (:function
+	 ((or nil :function)
 	  (or (cdr (assoc 'ftype decl))
 	      'cl:function))
 
