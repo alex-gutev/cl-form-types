@@ -263,7 +263,8 @@
 
     (_ t)))
 
-;;;; Grouping Forms
+
+;;; Grouping Forms
 
 (defmethod special-form-type ((operator (eql 'cl:progn)) operands env)
   (typecase operands
@@ -297,22 +298,51 @@
     (_ t)))
 
 (defmethod special-form-type ((operator (eql 'cl:locally)) operands env)
+  (typecase operands
+    (proper-list
+     (multiple-value-bind (body declarations)
+	 (parse-body operands :documentation nil)
+
+       (form-type
+	(lastcar body)
+	(augment-environment
+	 env
+	 :variable (extract-declared-vars declarations)
+	 :function (extract-declared-funcs declarations)
+	 :declare (mappend #'cdr declarations)))))
+
+    (otherwise t)))
+
+(defun extract-declared-vars (declarations)
+  "Extract variable names from TYPE declaration expressions.
+
+   DECLARATIONS is a list of DECLARE expressions, with `DECLARE` in
+   the CAR of each element of DECLARATIONS."
+
   (labels ((extract-vars (decl-expression)
 	     "Extract variable names from DECLARE TYPE expressions."
 
 	     (mappend #'extract-var (cdr decl-expression)))
-
-	   (extract-funcs (decl-expression)
-	     "Extract function names from DECLARE FTYPE expressions."
-
-	     (mappend #'extract-func (cdr decl-expression)))
 
 	   (extract-var (decl)
 	     "Extract variable names from TYPE declarations."
 
 	     (match decl
 	       ((list* 'type _ vars)
-		vars)))
+		vars))))
+
+    (mappend #'extract-vars declarations)))
+
+(defun extract-declared-funcs (declarations)
+  "Extract function names from FTYPE declaration expressions.
+
+   DECLARATIONS is a list of DECLARE expressions, with `DECLARE` in
+   the CAR of each element of DECLARATIONS."
+
+  (labels ((extract-funcs (decl-expression)
+	     "Extract function names from DECLARE FTYPE expressions."
+
+	     (mappend #'extract-func (cdr decl-expression)))
 
 	   (extract-func (decl)
 	     "Extract function names from FTYPE declarations."
@@ -321,22 +351,10 @@
 	       ((list* 'ftype _ fns)
 		fns))))
 
-    (typecase operands
-      (proper-list
-       (multiple-value-bind (body declarations)
-	   (parse-body operands :documentation nil)
+    (mappend #'extract-funcs declarations)))
 
-	 (form-type
-	  (lastcar body)
-	  (augment-environment
-	   env
-	   :variable (mappend #'extract-vars declarations)
-	   :function (mappend #'extract-funcs declarations)
-	   :declare (mappend #'cdr declarations)))))
-
-      (otherwise t))))
-
-;;;; Control Flow Context
+
+;;; Control Flow Context
 
 (defmethod special-form-type ((operator (eql 'cl:tagbody)) operands env)
   (declare (ignore operands env))
@@ -359,7 +377,8 @@
   (declare (ignore operands env))
   nil)
 
-;;;; Local Macro Definitions
+
+;;; Local Macro Definitions
 
 (defmethod special-form-type ((operator (eql 'cl:macrolet)) operands env)
   (match operands
@@ -382,3 +401,47 @@
       (augment-environment env :symbol-macro symbol-macros)))
 
     (_ t)))
+
+
+;;; Local Variable Binding Forms
+
+(defmethod special-form-type ((operator (eql 'cl:let)) operands env)
+  (let-form-type operands env))
+
+(defmethod special-form-type ((operator (eql 'cl:let*)) operands env)
+  (let-form-type operands env))
+
+(defun let-form-type (operands env)
+  "Determine the type of a LET/LET* form.
+
+   OPERANDS is the list of operands to the form.
+
+   ENV is the environment in which the form is found."
+
+  (flet ((extract-var (binding)
+	   "Extract the variable name from a binding."
+
+	   (match binding
+	     ((or (and (type symbol) variable)
+		  (list* (and (type symbol) variable) _))
+
+	      (list variable)))))
+
+    (match operands
+      ((list* (and (type proper-list) bindings)
+	      (and (type proper-list) body))
+
+       (multiple-value-bind (declarations body)
+	   (parse-body body :documentation nil)
+
+	 (form-type
+	  (lastcar body)
+
+	  (augment-environment
+	   env
+	   :variable (-> (mappend #'extract-var bindings)
+			 (append (extract-declared-vars declarations)))
+
+	   :function (extract-declared-funcs declarations)
+
+	   :declare declarations)))))))

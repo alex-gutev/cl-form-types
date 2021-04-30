@@ -27,7 +27,8 @@
   (:use :cl-environments-cl
 	:alexandria
 	:anaphora
-	:optima)
+	:optima
+	:arrows)
 
   (:export :form-types
 	   :form-type

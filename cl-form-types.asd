@@ -39,7 +39,8 @@
   :depends-on (#:cl-environments
 	       #:alexandria
 	       #:anaphora
-	       #:optima)
+	       #:optima
+	       #:arrows)
 
   :in-order-to ((asdf:test-op (asdf:test-op :cl-form-types/test))))
 
