@@ -421,9 +421,16 @@
     ((list* (and (type proper-list) symbol-macros)
 	    (and (type proper-list) body))
 
-     (form-type
-      (lastcar body)
-      (augment-environment env :symbol-macro symbol-macros)))
+     (multiple-value-bind (body declarations)
+	 (parse-body body :documentation nil)
+
+       (form-type
+	(lastcar body)
+	(augment-environment
+	 env
+	 :variable (extract-declared-vars declarations)
+	 :function (extract-declared-funcs declarations)
+	 :symbol-macro symbol-macros))))
 
     (_ t)))
 
@@ -469,7 +476,9 @@
 
 	   :function (extract-declared-funcs declarations)
 
-	   :declare declarations)))))))
+	   :declare declarations))))
+
+      (_ t))))
 
 
 ;;; Local Function Binding Forms
