@@ -412,7 +412,8 @@
 	  env
 	  :variable (extract-declared-vars declarations)
 	  :function (extract-declared-funcs declarations)
-	  :macro (mapcar #'make-macro macros)))))
+	  :macro (mapcar #'make-macro macros)
+	  :declare (mappend #'cdr declarations)))))
 
      (_ t))))
 
@@ -430,7 +431,8 @@
 	 env
 	 :variable (extract-declared-vars declarations)
 	 :function (extract-declared-funcs declarations)
-	 :symbol-macro symbol-macros))))
+	 :symbol-macro symbol-macros
+	 :declare (mappend #'cdr declarations)))))
 
     (_ t)))
 
