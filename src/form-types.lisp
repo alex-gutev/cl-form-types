@@ -58,7 +58,24 @@
    to multiple values or evaluates to less values than N, NIL is
    returned."
 
-  (labels ((nth-type (types n)
+  (labels ((extract-type (type)
+	     (match type
+	       ((list* 'values types)
+		(nth-type types n))
+
+	       ((list 'not type)
+		`(not ,(extract-type type)))
+
+	       ((list* (and (or 'or 'and) op)
+		       types)
+		`(,op ,@(mapcar #'extract-type types)))
+
+	       (type
+		(if (zerop n)
+		    type
+		    nil))))
+
+	   (nth-type (types n)
 	     (match types
 	       ((list '&rest type)
 		type)
@@ -73,14 +90,7 @@
 		    type
 		    (nth-type rest (1- n)))))))
 
-    (match (form-type form env)
-      ((list* 'values types)
-       (nth-type types n))
-
-      (type
-       (if (zerop n)
-	   type
-	   nil)))))
+    (extract-type (form-type form env))))
 
 (defun form-type (form env)
   "Determines the type of a form in an environment.
