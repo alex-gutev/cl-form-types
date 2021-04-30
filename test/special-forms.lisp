@@ -775,3 +775,59 @@
 
       (is-form-type (eql 1) number-one)
       (is-form-type integer (local number-one)))))
+
+
+;;; Control Transfer Form Tests
+
+(test go-forms
+  "Test FORM-TYPE on GO forms"
+
+  ;; GO forms do not return, instead they execute a jump
+
+  (is-form-type nil
+    (go tag-1)
+    :strict t)
+
+  ;; Malformed but test to make sure the tag is not being interpreted
+  ;; as a number.
+  (is-form-type nil
+    (go 2)
+    :strict t))
+
+(test return-from
+  "Test FORM-TYPE on RETURN-FROM forms"
+
+  ;; RETURN-FROM forms do not return, instead they execute a jump
+
+  (is-form-type nil
+    (return-from block-name 102))
+
+  (is-form-type nil
+    (return-from nil "abc")))
+
+(test throw-forms
+  "Test FORM-TYPE on THROW forms"
+
+  ;; THROW forms do not return, instead they execute a jump
+
+  (is-form-type nil
+    (throw 'tag-name 15)
+    :strict t))
+
+(test tagbody-forms
+  "Test FORM-TYPE on TAGBODY forms"
+
+  ;; TAGBODY forms return NIL by definition
+
+  (is-form-type null
+    (tagbody
+     tag1
+       (pprint "In TAG1")
+       (go tag3)
+
+     tag2
+       (pprint "IN TAG2")
+       (go tag1)
+
+     tag3
+       (the number (get-x)))))
