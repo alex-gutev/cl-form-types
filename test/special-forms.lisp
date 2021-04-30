@@ -548,6 +548,69 @@
       (is-form-type (eql 100) (group (pprint "one hundred") 100)))))
 
 
+;;; UNWIND-PROTECT Form Tests
+
+(test unwind-protect-forms
+  "Test FORM-TYPE on UNWIND-PROTECT forms"
+
+  (is-form-type string
+    (unwind-protect (cl:the string (concatenate helloe bye))
+      (pprint hello)
+      (pprint bye)))
+
+  (is-form-type number
+    (unwind-protect (pass-form (the number (+ a b))))))
+
+(test unwind-protect-no-cleanup-forms
+  "Test FORM-TYPE on UNWIND-PROTECT forms without cleanup forms"
+
+  (is-form-type string
+    (unwind-protect "hello world")))
+
+(test unwind-protect-nested-forms
+  "Test FORM-TYPE on nested UNWIND-PROTECT forms"
+
+  (is-form-type string
+    (unwind-protect
+	 (unwind-protect
+	      (cl:the string (concatenate hello bye))
+	   (pprint bye))
+      (pprint hello))))
+
+(test unwind-protect-variable-forms
+  "Test FORM-TYPE on UNWIND-PROTECT forms which return value of variable"
+
+  (let ((greeting "hello world"))
+    (declare (type string greeting)
+	     (ignorable greeting))
+
+    (symbol-macrolet ((the-number-5 5))
+
+      (is-form-type string
+	(unwind-protect greeting
+	  (pprint greeting)))
+
+      (is-form-type (eql 5)
+	(unwind-protect the-number-5)))))
+
+(test unwind-protect-list-forms
+  "Test FORM-TYPES on UNWIND-PROTECT forms which return function call expression"
+
+  (labels ((inc (a) (1+ a))
+	   (add (x y) (+ x y)))
+
+    (declare (ftype (function (integer) integer) inc)
+	     (ftype (function (number number) number) add))
+
+    (is-form-type integer
+      (unwind-protect (inc c)
+	(add a b)))
+
+    (is-form-type number
+      (unwind-protect (add a b)
+	(inc c)))))
+
+
 ;;; SETQ Form Tests
 
 (test setq-forms
