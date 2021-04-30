@@ -192,6 +192,105 @@
       (is-form-type (eql 100) (swap-forms 100 (pprint "one hundred"))))))
 
 
+;;; EVAL-WHEN Form Tests
+
+(test eval-when-forms
+  "Test FORM-TYPE on EVAL-WHEN forms"
+
+  (is-form-type string
+    (eval-when (:compile-toplevel :load-toplevel :execute)
+      (pprint hello)
+      (pprint bye)
+      (cl:the string (concatenate helloe bye))))
+
+  (is-form-type number
+    (eval-when (:execute)
+      (pass-form (the number (+ a b))))))
+
+(test eval-when-no-execute-forms
+  "Test FORM-TYPE on EVAL-WHEN forms without :EXECUTE situation"
+
+  (is-form-type null
+    (eval-when (:compile-toplevel)
+      "hello world")))
+
+(test eval-when-nested-forms
+  "Test FORM-TYPE on nested EVAL-WHEN forms"
+
+  (is-form-type string
+    (eval-when (:load-toplevel :execute :compile-toplevel)
+      (pprint hello)
+      (eval-when (cl:eval)
+	(pprint bye)
+	(cl:the string (concatenate hello bye))))))
+
+(test eval-when-empty-forms
+  "Test FORM-TYPE on empty EVAL-WHEN forms"
+
+  (is-form-type null (cl:eval-when (:load-toplevel :execute :compile-toplevel))))
+
+(test eval-when-variable-forms
+  "Test FORM-TYPE on EVAL-WHEN forms which return value of variable"
+
+  (let ((greeting "hello world"))
+    (declare (type string greeting)
+	     (ignorable greeting))
+
+    (symbol-macrolet ((the-number-5 5))
+
+      (is-form-type string
+	(eval-when (:execute)
+	  (pprint greeting)
+	  greeting))
+
+      (is-form-type (eql 5)
+	(eval-when (compile load eval) the-number-5)))))
+
+(test eval-when-list-forms
+  "Test FORM-TYPES on EVAL-WHEN forms which return function call expression"
+
+  (labels ((inc (a) (1+ a))
+	   (add (x y) (+ x y)))
+
+    (declare (ftype (function (integer) integer) inc)
+	     (ftype (function (number number) number) add))
+
+    (is-form-type integer
+      (eval-when (:execute)
+	(add a b)
+	(inc c)))
+
+    (is-form-type number
+      (eval-when (:execute)
+	(inc c)
+	(add a b)))))
+
+(test macro-eval-when-forms
+  "Test FORM-TYPE on macros which expand to EVAL-WHEN forms"
+
+  (macrolet ((group (&body forms)
+	       `(pass-form
+		 (eval-when (:execute)
+		   ,@forms))))
+
+    (symbol-macrolet ((eval-when-integer
+		       (eval-when (:execute)
+			 (pprint a)
+			 (pprint b)
+			 (the integer (+ a b)))))
+
+      (is-form-type string
+	(pass-form
+	 (eval-when (:execute)
+	   (pprint str1)
+	   (the string (concatenate str1 str2)))))
+
+      (is-form-type integer eval-when-integer)
+      (is-form-type integer (pass-form eval-when-integer))
+
+      (is-form-type (eql 100) (group (pprint "one hundred") 100)))))
+
+
 ;;; SETQ Form Tests
 
 (test setq-forms
