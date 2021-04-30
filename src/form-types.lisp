@@ -445,3 +445,45 @@
 	   :function (extract-declared-funcs declarations)
 
 	   :declare declarations)))))))
+
+
+;;; Local Function Binding Forms
+
+(defmethod special-form-type ((operator (eql 'cl:flet)) operands env)
+  (flet-form-type operands env))
+
+(defmethod special-form-type ((operator (eql 'cl:labels)) operands env)
+  (flet-form-type operands env))
+
+(defun flet-form-type (operands env)
+  "Determine the type of a FLET/LABELS form.
+
+   OPERANDS is the list of operands to the form.
+
+   ENV is the environment in which the form is found."
+
+  (flet ((extract-function (binding)
+	   "Extract the function name from a definition."
+
+	   (match binding
+	     ((list* (and (type symbol) name) _)
+	      (list name)))))
+
+    (match operands
+      ((list* (and (type proper-list) functions)
+	      (and (type proper-list) body))
+
+       (multiple-value-bind (declarations body)
+	   (parse-body body :documentation nil)
+
+	 (form-type
+	  (lastcar body)
+
+	  (augment-environment
+	   env
+	   :variable (extract-declared-vars declarations)
+
+	   :function (-> (mappend #'extract-function functions)
+			 (append (extract-declared-funcs declarations)))
+
+	   :declare declarations)))))))
