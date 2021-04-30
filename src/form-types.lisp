@@ -391,15 +391,30 @@
 ;;; Local Macro Definitions
 
 (defmethod special-form-type ((operator (eql 'cl:macrolet)) operands env)
-  (match operands
-    ((list* (and (type proper-list) macros)
-	    (and (type proper-list) body))
+  (flet ((make-macro (def)
+	   (match def
+	     ((list* (and (type symbol) name)
+		     (and (type proper-list) lambda-list)
+		     (and (type proper-list) body))
 
-     (form-type
-      (lastcar body)
-      (augment-environment env :macro (mapcar (rcurry #'enclose-macro env) macros))))
+	      (list name (enclose-macro name lambda-list body env))))))
 
-    (_ t)))
+   (match operands
+     ((list* (and (type proper-list) macros)
+	     (and (type proper-list) body))
+
+      (multiple-value-bind (body declarations)
+	  (parse-body body :documentation nil)
+
+	(form-type
+	 (lastcar body)
+	 (augment-environment
+	  env
+	  :variable (extract-declared-vars declarations)
+	  :function (extract-declared-funcs declarations)
+	  :macro (mapcar #'make-macro macros)))))
+
+     (_ t))))
 
 (defmethod special-form-type ((operator (eql 'cl:symbol-macrolet)) operands env)
   (match operands
