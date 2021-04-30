@@ -463,7 +463,7 @@
       ((list* (and (type proper-list) bindings)
 	      (and (type proper-list) body))
 
-       (multiple-value-bind (declarations body)
+       (multiple-value-bind (body declarations)
 	   (parse-body body :documentation nil)
 
 	 (form-type
@@ -472,11 +472,11 @@
 	  (augment-environment
 	   env
 	   :variable (-> (mappend #'extract-var bindings)
-			 (append (extract-declared-vars declarations)))
+			 (union (extract-declared-vars declarations)))
 
 	   :function (extract-declared-funcs declarations)
 
-	   :declare declarations))))
+	   :declare (mappend #'cdr declarations)))))
 
       (_ t))))
 
