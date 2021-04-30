@@ -266,6 +266,99 @@
       (is-form-type (eql 100) (swap-forms 100 (pprint "one hundred"))))))
 
 
+;;; PROGV Form Tests
+
+(test progv-forms
+  "Test FORM-TYPE on PROGV forms"
+
+  (is-form-type string
+    (progv '(x y z) '(1 2 3)
+      (pprint hello)
+      (pprint bye)
+      (cl:the string (concatenate hello bye))))
+
+  (is-form-type number
+    (progv nil nil
+      (pass-form (the number (+ a b))))))
+
+(test progv-nested-forms
+  "Test FORM-TYPE on nested PROGV forms"
+
+  (is-form-type string
+    (progv vars values
+      (pprint hello)
+      (progv nil nil
+	(pprint bye)
+	(cl:the string (concatenate hello bye))))))
+
+(test progv-empty-forms
+  "Test FORM-TYPE on empty PROGV forms"
+
+  (is-form-type (eql nil) (progv '(x y z) '(1 2 3)))
+  (is-form-type (eql nil) (progv nil nil (progv nil nil))))
+
+(test progv-variable-forms
+  "Test FORM-TYPE on PROGV forms which return value of variable"
+
+  (let ((greeting "hello world"))
+    (declare (type string greeting)
+	     (ignorable greeting))
+
+    (symbol-macrolet ((the-number-5 5))
+
+      (is-form-type string
+	(progv nil nil
+	  (pprint greeting)
+	  greeting))
+
+      (is-form-type (eql 5)
+	(progv nil nil the-number-5)))))
+
+(test progv-list-forms
+  "test FORM-TYPES on PROGV forms which return function call expression"
+
+  (labels ((inc (a) (1+ a))
+	   (add (x y) (+ x y)))
+    (declare (ftype (function (integer) integer) inc)
+	     (ftype (function (number number) number) add))
+
+    (is-form-type integer
+      (progv nil nil
+	(add a b)
+	(inc c)))
+
+    (is-form-type number
+      (progv nil nil
+	(inc c)
+	(add a b)))))
+
+(test macro-progv-forms
+  "Test FORM-TYPE on macros which expand to PROGv forms"
+
+  (macrolet ((local-pass (form)
+	       `(pass-form ,form))
+
+	     (swap-forms (form1 form2)
+	       `(progv nil nil ,form2 ,form1)))
+
+    (symbol-macrolet ((progv-integer
+		       (progv nil nil
+			 (pprint a)
+			 (pprint b)
+			 (the integer (+ a b)))))
+
+      (is-form-type string
+	(pass-form
+	 (progv nil nil
+	   (pprint str1)
+	   (the string (concatenate str1 str2)))))
+
+      (is-form-type integer progv-integer)
+      (is-form-type integer (local-pass progv-integer))
+
+      (is-form-type (eql 100) (swap-forms 100 (pprint "one hundred"))))))
+
+
 ;;; EVAL-WHEN Form Tests
 
 (test eval-when-forms
