@@ -359,6 +359,96 @@
       (is-form-type (eql 100) (swap-forms 100 (pprint "one hundred"))))))
 
 
+;;; MULTIPLE-VALUE-PROG1 Form Tests
+
+(test multiple-value-prog1-forms
+  "Test FORM-TYPE on MULTIPLE-VALUE-PROG1 forms"
+
+  (is-form-type string
+    (multiple-value-prog1 (cl:the string (concatenate hello bye))
+      (pprint hello)
+      (pprint bye)))
+
+  (is-form-type number
+    (multiple-value-prog1
+	(pass-form (the number (+ a b)))
+      "hello world")))
+
+(test multiple-value-prog1-nested-forms
+  "Test FORM-TYPE on nested MULTIPLE-VALUE-PROG1 forms"
+
+  (is-form-type string
+    (multiple-value-prog1
+	(multiple-value-prog1 (cl:the string (concatenate hello bye))
+	  (pprint bye))
+      (pprint hello))))
+
+(test multiple-value-prog1-empty-forms
+  "Test FORM-TYPE on empty MULTIPLE-VALUE-PROG1 forms"
+
+  (is-form-type (eql nil) (multiple-value-prog1 nil))
+  (is-form-type (eql nil) (multiple-value-prog1 (multiple-value-prog1 nil))))
+
+(test multiple-value-prog1-variable-forms
+  "Test FORM-TYPE on MULTIPLE-VALUE-PROG1 forms which return value of variable"
+
+  (let ((greeting "hello world"))
+    (declare (type string greeting)
+	     (ignorable greeting))
+
+    (symbol-macrolet ((the-number-5 5))
+
+      (is-form-type string
+	(multiple-value-prog1 greeting
+	  (pprint greeting)))
+
+      (is-form-type (eql 5)
+	(multiple-value-prog1 the-number-5
+	  "A string")))))
+
+(test multiple-value-prog1-list-forms
+  "test FORM-TYPES on MULTIPLE-VALUE-PROG1 forms which return function call expression"
+
+  (labels ((inc (a) (1+ a))
+	   (add (x y) (+ x y)))
+    (declare (ftype (function (integer) integer) inc)
+	     (ftype (function (number number) number) add))
+
+    (is-form-type integer
+      (multiple-value-prog1 (inc c)
+	(add a b)))
+
+    (is-form-type number
+      (multiple-value-prog1 (add a b)
+	(inc c)))))
+
+(test macro-multiple-value-prog1-forms
+  "Test FORM-TYPE on macros which expand to Multiple-Value-Prog1 forms"
+
+  (macrolet ((local-pass (form)
+	       `(pass-form ,form))
+
+	     (swap-forms (form1 form2)
+	       `(multiple-value-prog1 ,form1 ,form2)))
+
+    (symbol-macrolet ((multiple-value-prog1-integer
+		       (multiple-value-prog1
+			   (the integer (+ a b))
+			 (pprint a)
+			 (pprint b))))
+
+      (is-form-type string
+	(pass-form
+	 (multiple-value-prog1
+	     (the string (concatenate str1 str2))
+	   (pprint str1))))
+
+      (is-form-type integer multiple-value-prog1-integer)
+      (is-form-type integer (local-pass multiple-value-prog1-integer))
+
+      (is-form-type (eql 100) (swap-forms 100 (pprint "one hundred"))))))
+
+
 ;;; EVAL-WHEN Form Tests
 
 (test eval-when-forms
