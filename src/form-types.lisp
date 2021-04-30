@@ -268,7 +268,7 @@
 
 (defmethod special-form-type ((operator (eql 'cl:multiple-value-prog1)) operands env)
   (match operands
-    ((list first-form _)
+    ((list* first-form _)
      (form-type first-form env))
 
     (_ t)))
