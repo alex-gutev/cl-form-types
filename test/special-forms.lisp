@@ -894,3 +894,51 @@
 
 	(pprint "In MACROLET")
 	(thing (func x))))))
+
+(test symbol-macrolet-forms
+  "Test FORM-TYPE on SYMBOL-MACROLET forms"
+
+  (is-form-type string
+    (cl:symbol-macrolet ((greeting "Welcome!"))
+      (pprint greeting)
+      (* 1 2)
+      greeting))
+
+  (is-form-type number
+    (cl:symbol-macrolet ((the-number-5 5))
+      (format t "Number: ~a~%" the-number-5)
+      (pass-form the-number-5))))
+
+(test symbol-macrolet-variable-forms
+  "Test FORM-TYPE on SYMBOL-MACROLET forms which return variable"
+
+  (let ((x 1050))
+    (declare (type number x))
+
+    (symbol-macrolet ((person-name "Joe"))
+
+      (is-form-type number
+	(cl:symbol-macrolet ((greeting "Welcome"))
+	  (pprint "In SYMBOL-MACROLET")
+	  x))
+
+      (is-form-type string
+	(cl:symbol-macrolet ((greeting "Welcome"))
+	  (pprint "In SYMBOL-MACROLET")
+	  (pass-form person-name)))
+
+      (is-form-type symbol
+	(cl:symbol-macrolet ((x 'a-symbol))
+	  (pprint "In SYMBOL-MACROLET")
+	  x)))))
+
+(test symbol-macrolet-function-forms
+  "Test FORM-TYPE on SYMBOL-MACROLET forms which return function expression"
+
+  (flet ((thing (seq) (reverse seq)))
+    (declare (ftype (function (sequence) sequence) thing))
+
+    (is-form-type sequence
+      (cl:symbol-macrolet ()
+	(pprint "In SYMBOL-MACROLET")
+	(thing seq)))))
