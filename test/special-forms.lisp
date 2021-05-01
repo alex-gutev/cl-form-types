@@ -715,7 +715,7 @@
 	   (apply #'symbolicate things)))
 
     (declare (ftype (function (string string) string) join)
-	     (ftype (function (* &rest *) symbol) symb))
+	     (ftype (function (&rest *) symbol) symb))
 
     (is-form-type string
       (setq x (symb 'hello 1)
