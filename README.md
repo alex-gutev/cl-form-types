@@ -88,4 +88,22 @@ Determine the type of each form in a list.
 Returns a list where each element is the type specifier of the
 corresponding form in `FORMS`.
 
+### MALFORMED-FORM-ERROR
 
+Condition `MALFORMED-FORM-ERROR`
+
+Condition signalled when a malformed form is passed to one of the
+`FORM-TYPE` functions.
+
+Slots:
+
+* `FORM` - The malformed form.
+
+### RETURN-DEFAULT-TYPE
+
+Function `RETURN-DEFAULT-TYPE &OPTIONAL (TYPE T)`
+
+Invoke the `RETURN-DEFAULT-TYPE` restart.
+
+This restart, for a `MALFORMED-FORM-ERROR` condition, returns the type
+`TYPE` as the form type for the malformed form.
