@@ -173,6 +173,62 @@
       (if (evenp a) (mul a b)))))
 
 
+;;; LOAD-TIME-VALUE Form Tests
+
+(test load-time-value-forms
+  "Test FORM-TYPE on LOAD-TIME-VALUE forms"
+
+  (is-form-type integer
+    (load-time-value (the integer (+ a b))))
+
+  (is-form-type (eql 100)
+    (load-time-value 100 t)))
+
+(test load-time-value-macro-forms
+  "Test FORM-TYPE on LOAD-TIME-VALUE forms with macros"
+
+  (macrolet ((pass-mac (form)
+	       `(pass-form ,form))
+
+	     (wrap-number (expression)
+	       `(pass-mac (the number ,expression))))
+
+    (symbol-macrolet ((local-string "abc"))
+
+      (is-form-type number
+	(load-time-value (wrap-number (+ a b))))
+
+      (is-form-type string
+	(load-time-value local-string)))))
+
+(test load-time-value-variable-forms
+  "Test FORM-TYPE on LOAD-TIME-VALUE forms which return value of variable"
+
+  ;; Test that local variables do not affect the type of a
+  ;; LOAD-TIME-VALUE form
+
+  (let ((local-var 12))
+    (declare (type integer local-var)
+	     (ignorable local-var))
+
+    (is-form-type t
+      (load-time-value local-var)
+      :strict t)))
+
+(test load-time-value-function-forms
+  "Test FORM-TYPE on LOAD-TIME-VALUE forms which return function call expression"
+
+  ;; Test that local functions do not affect the type of a
+  ;; LOAD-TIME-VALUE form
+
+  (flet ((rev-seq (seq) (reverse seq)))
+    (declare (ftype (function (sequence) sequence) rev-seq))
+
+    (is-form-type t
+      (load-time-value (rev-seq #(1 2 3 4 5)))
+      :strict t)))
+
+
 ;;; PROGN Form Tests
 
 (test progn-forms
