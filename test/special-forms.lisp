@@ -1049,3 +1049,116 @@
 	(pprint x)
 	(pprint y)
 	(thing (list x y))))))
+
+
+;;; Local Function Binding Form Types
+
+(test flet-forms
+  "Test FORM-TYPE on FLET forms"
+
+  (is-form-type (eql 10)
+    (cl:flet ()
+      (pprint "In FLET")
+      10))
+
+  (is-form-type string
+    (cl:flet ((flip (str)
+		(reverse str)))
+      (declare (ftype (function (string) string) flip))
+
+      (format t "Hello: ~a~%" name)
+      (flip name))))
+
+(test flet-variable-forms
+  "Test FORM-TYPE on FLET forms which return variable"
+
+  (let ((var 101))
+    (declare (type number var)
+	     (ignorable var))
+
+    (symbol-macrolet ((a-string "A string"))
+
+      (is-form-type number
+	(cl:flet ((flip (str) (reverse str)))
+	  (flip name)
+	  (pass-form var)))
+
+      (is-form-type string
+	(cl:flet ((add (a b) (+ a b)))
+	  (declare (ftype (function (integer integer) integer) add))
+	  (add x y)
+	  a-string)))))
+
+(test flet-function-forms
+  "Test FORM-TYPE on FLET forms which return function expression"
+
+  (flet ((thing (seq) (reverse seq)))
+    (declare (ftype (function (sequence) sequence) thing))
+
+    (is-form-type sequence
+      (cl:flet ((inc (x) (1+ x)))
+	(declare (ftype (function (fixnum) fixnum) inc))
+	(pprint (inc y))
+	(thing '(1 2 3))))
+
+    (is-form-type fixnum
+      (cl:flet ((thing (x) (1+ x))
+	     (inc (x) (+ x 1)))
+	(declare (ftype (function (fixnum) fixnum) inc thing))
+	(pprint (inc y))
+	(thing 15)))))
+
+(test labels-forms
+  "Test FORM-TYPE on LABELS forms"
+
+  (is-form-type (eql 10)
+    (cl:labels ()
+      (pprint "In LABELS")
+      10))
+
+  (is-form-type string
+    (cl:labels ((flip (str)
+		(reverse str)))
+      (declare (ftype (function (string) string) flip))
+
+      (format t "Hello: ~a~%" name)
+      (flip name))))
+
+(test labels-variable-forms
+  "Test FORM-TYPE on LABELS forms which return variable"
+
+  (let ((var 101))
+    (declare (type number var)
+	     (ignorable var))
+
+    (symbol-macrolet ((a-string "A string"))
+
+      (is-form-type number
+	(cl:labels ((flip (str) (reverse str)))
+	  (flip name)
+	  (pass-form var)))
+
+      (is-form-type string
+	(cl:labels ((add (a b) (+ a b)))
+	  (declare (ftype (function (integer integer) integer) add))
+	  (add x y)
+	  a-string)))))
+
+(test labels-function-forms
+  "Test FORM-TYPE on LABELS forms which return function expression"
+
+  (labels ((thing (seq) (reverse seq)))
+    (declare (ftype (function (sequence) sequence) thing))
+
+    (is-form-type sequence
+      (cl:labels ((inc (x) (1+ x)))
+	(declare (ftype (function (fixnum) fixnum) inc))
+	(pprint (inc y))
+	(thing '(1 2 3))))
+
+    (is-form-type fixnum
+      (cl:labels ((thing (x) (1+ x))
+	     (inc (x) (+ x 1)))
+	(declare (ftype (function (fixnum) fixnum) inc thing))
+	(pprint (inc y))
+	(thing 15)))))
