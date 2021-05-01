@@ -56,9 +56,9 @@
 (test the-forms
   "Test FORM-TYPE on THE forms"
 
-  (is-form-type number (cl:the number some-nonsense))
+  (is-form-type number (the number some-nonsense))
   (is-form-type (simple-array integer) (the (simple-array integer) (range 1 10)))
-  (is-form-type (array fixnum 2) (cl:the (array fixnum 2) (identity-matrix 3))))
+  (is-form-type (array fixnum 2) (the (array fixnum 2) (identity-matrix 3))))
 
 (test macro-the-forms
   "Test FORM-TYPE on macros which expand to THE forms"
@@ -99,7 +99,7 @@
       (is-form-type list (my-quote '(a b c d))))))
 
 
-;;; FUNCTION FORM Tests
+;;; FUNCTION Form Tests
 
 (test function-forms
   "Test FORM-TYPE on FUNCTION forms"
@@ -158,7 +158,7 @@
       (is-form-type (or integer string)
 	(if (test x) varx greeting)))))
 
-(test if-list-forms
+(test if-function-forms
   "Test FORM-TYPE on IF forms which return function call expression"
 
   (flet ((flip (x) (reverse x))
@@ -182,7 +182,7 @@
     (progn
       (pprint hello)
       (pprint bye)
-      (cl:the string (concatenate hello bye))))
+      (the string (concatenate hello bye))))
 
   (is-form-type number
     (progn
@@ -196,7 +196,7 @@
       (pprint hello)
       (progn
 	(pprint bye)
-	(cl:the string (concatenate hello bye))))))
+	(the string (concatenate hello bye))))))
 
 (test progn-empty-forms
   "Test FORM-TYPE on empty PROGN forms"
@@ -221,8 +221,8 @@
       (is-form-type (eql 5)
 	(progn the-number-5)))))
 
-(test progn-list-forms
-  "test FORM-TYPES on PROGN forms which return function call expression"
+(test progn-function-forms
+  "Test FORM-TYPES on PROGN forms which return function call expression"
 
   (labels ((inc (a) (1+ a))
 	   (add (x y) (+ x y)))
@@ -275,7 +275,7 @@
     (progv '(x y z) '(1 2 3)
       (pprint hello)
       (pprint bye)
-      (cl:the string (concatenate hello bye))))
+      (the string (concatenate hello bye))))
 
   (is-form-type number
     (progv nil nil
@@ -289,7 +289,7 @@
       (pprint hello)
       (progv nil nil
 	(pprint bye)
-	(cl:the string (concatenate hello bye))))))
+	(the string (concatenate hello bye))))))
 
 (test progv-empty-forms
   "Test FORM-TYPE on empty PROGV forms"
@@ -314,8 +314,8 @@
       (is-form-type (eql 5)
 	(progv nil nil the-number-5)))))
 
-(test progv-list-forms
-  "test FORM-TYPES on PROGV forms which return function call expression"
+(test progv-function-forms
+  "Test FORM-TYPES on PROGV forms which return function call expression"
 
   (labels ((inc (a) (1+ a))
 	   (add (x y) (+ x y)))
@@ -333,7 +333,7 @@
 	(add a b)))))
 
 (test macro-progv-forms
-  "Test FORM-TYPE on macros which expand to PROGv forms"
+  "Test FORM-TYPE on macros which expand to PROGV forms"
 
   (macrolet ((local-pass (form)
 	       `(pass-form ,form))
@@ -365,7 +365,7 @@
   "Test FORM-TYPE on MULTIPLE-VALUE-PROG1 forms"
 
   (is-form-type string
-    (multiple-value-prog1 (cl:the string (concatenate hello bye))
+    (multiple-value-prog1 (the string (concatenate hello bye))
       (pprint hello)
       (pprint bye)))
 
@@ -379,7 +379,7 @@
 
   (is-form-type string
     (multiple-value-prog1
-	(multiple-value-prog1 (cl:the string (concatenate hello bye))
+	(multiple-value-prog1 (the string (concatenate hello bye))
 	  (pprint bye))
       (pprint hello))))
 
@@ -406,7 +406,7 @@
 	(multiple-value-prog1 the-number-5
 	  "A string")))))
 
-(test multiple-value-prog1-list-forms
+(test multiple-value-prog1-function-forms
   "test FORM-TYPES on MULTIPLE-VALUE-PROG1 forms which return function call expression"
 
   (labels ((inc (a) (1+ a))
@@ -458,7 +458,7 @@
     (eval-when (:compile-toplevel :load-toplevel :execute)
       (pprint hello)
       (pprint bye)
-      (cl:the string (concatenate helloe bye))))
+      (the string (concatenate helloe bye))))
 
   (is-form-type number
     (eval-when (:execute)
@@ -479,12 +479,12 @@
       (pprint hello)
       (eval-when (cl:eval)
 	(pprint bye)
-	(cl:the string (concatenate hello bye))))))
+	(the string (concatenate hello bye))))))
 
 (test eval-when-empty-forms
   "Test FORM-TYPE on empty EVAL-WHEN forms"
 
-  (is-form-type null (cl:eval-when (:load-toplevel :execute :compile-toplevel))))
+  (is-form-type null (eval-when (:load-toplevel :execute :compile-toplevel))))
 
 (test eval-when-variable-forms
   "Test FORM-TYPE on EVAL-WHEN forms which return value of variable"
@@ -503,7 +503,7 @@
       (is-form-type (eql 5)
 	(eval-when (compile load eval) the-number-5)))))
 
-(test eval-when-list-forms
+(test eval-when-function-forms
   "Test FORM-TYPES on EVAL-WHEN forms which return function call expression"
 
   (labels ((inc (a) (1+ a))
@@ -554,7 +554,7 @@
   "Test FORM-TYPE on UNWIND-PROTECT forms"
 
   (is-form-type string
-    (unwind-protect (cl:the string (concatenate helloe bye))
+    (unwind-protect (the string (concatenate helloe bye))
       (pprint hello)
       (pprint bye)))
 
@@ -573,7 +573,7 @@
   (is-form-type string
     (unwind-protect
 	 (unwind-protect
-	      (cl:the string (concatenate hello bye))
+	      (the string (concatenate hello bye))
 	   (pprint bye))
       (pprint hello))))
 
@@ -593,7 +593,7 @@
       (is-form-type (eql 5)
 	(unwind-protect the-number-5)))))
 
-(test unwind-protect-list-forms
+(test unwind-protect-function-forms
   "Test FORM-TYPES on UNWIND-PROTECT forms which return function call expression"
 
   (labels ((inc (a) (1+ a))
@@ -635,6 +635,8 @@
   (is-form-type t (setq a 1 2) :strict t))
 
 (test setq-variable-forms
+  "Test FORM-TYPE on SETQ forms which return variable"
+
   (let ((x 1))
     (declare (type integer x)
 	     (ignorable x))
@@ -645,6 +647,8 @@
       (is-form-type string (setq str greeting)))))
 
 (test setq-function-forms
+  "Test FORM-TYPE on SETQ forms which return function call expression"
+
   (flet ((join (str1 str2)
 	   (concatenate str1 str2))
 
@@ -689,7 +693,7 @@
     (cl:locally (declare (optimize speed))
       (pprint hello)
       (pprint bye)
-      (cl:the string (concatenate hello bye))))
+      (the string (concatenate hello bye))))
 
   (is-form-type number
     (cl:locally (pass-form (the number (+ a b))))))
@@ -700,15 +704,15 @@
   (is-form-type string
     (cl:locally
 	(pprint hello)
-      (locally (declare (optimize space))
+      (cl:locally (declare (optimize space))
 	(pprint bye)
-	(cl:the string (concatenate hello bye))))))
+	(the string (concatenate hello bye))))))
 
 (test locally-empty-forms
   "Test FORM-TYPE on empty LOCALLY forms"
 
-  (is-form-type (eql nil) (locally))
-  (is-form-type null (locally (declare (optimize debug)))))
+  (is-form-type (eql nil) (cl:locally))
+  (is-form-type null (cl:locally (declare (optimize debug)))))
 
 (test locally-variable-forms
   "Test FORM-TYPE on LOCALLY forms with TYPE declarations, returning variables"
@@ -742,13 +746,13 @@
 	  (pprint greeting)
 	  greeting)))))
 
-(test locally-list-forms
+(test locally-function-forms
   "Test FORM-TYPE on LOCALLY forms with FTYPE, returning function call expressions"
 
   (labels ((neg (a) (- a))
 	   (sub (a b) (- a b)))
 
-    (is-form-type t (locally (neg x)) :strict t)
+    (is-form-type t (cl:locally (neg x)) :strict t)
 
     (is-form-type integer
       (cl:locally (declare (ftype (function (integer) integer) neg))
@@ -765,7 +769,7 @@
   (macrolet ((local (form)
 	       `(pass-form ,form)))
 
-    (symbol-macrolet ((number-one (locally 1)))
+    (symbol-macrolet ((number-one (cl:locally 1)))
 
       (is-form-type string
 	(pass-form
