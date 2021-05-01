@@ -509,7 +509,7 @@
       ((list* (and (type proper-list) functions)
 	      (and (type proper-list) body))
 
-       (multiple-value-bind (declarations body)
+       (multiple-value-bind (body declarations)
 	   (parse-body body :documentation nil)
 
 	 (form-type
@@ -520,6 +520,6 @@
 	   :variable (extract-declared-vars declarations)
 
 	   :function (-> (mappend #'extract-function functions)
-			 (append (extract-declared-funcs declarations)))
+			 (union (extract-declared-funcs declarations)))
 
-	   :declare declarations)))))))
+	   :declare (mappend #'cdr declarations))))))))
