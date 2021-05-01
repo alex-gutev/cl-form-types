@@ -387,6 +387,21 @@
 	 :function (extract-declared-funcs declarations)
 	 :declare (mappend #'cdr declarations)))))))
 
+#-sbcl
+(defun extract-declared-vars (declarations)
+  (declare (ignore declarations))
+  nil)
+
+#-sbcl
+(defun extract-declared-funcs (declarations)
+  (declare (ignore declarations))
+  nil)
+
+;;; SBCL does not record declarations added to the environment, by
+;;; AUGMENT-ENVIRONMENT, if the corresponding variable/function is not
+;;; added as well, even if it is already present in the environment.
+
+#+sbcl
 (defun extract-declared-vars (declarations)
   "Extract variable names from TYPE declaration expressions.
 
@@ -412,6 +427,7 @@
 
     (mappend #'extract-vars declarations)))
 
+#+sbcl
 (defun extract-declared-funcs (declarations)
   "Extract function names from FTYPE declaration expressions.
 
