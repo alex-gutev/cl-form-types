@@ -122,6 +122,16 @@
 
 ;;; Basic Form Types
 
+(defvar *use-local-declared-types* t
+  "Flag for whether the declared types, in the local environment, should be used.
+
+   If NIL the declared types in the global NIL environment are used.
+
+   The purpose of this is to support LOAD-TIME-VALUE, in which the
+   form is macroexpanded in the local environment but is actually
+   evaluated in the global environment, therefore it does not have
+   access to local variables.")
+
 (defun list-form-type (operator arguments env)
   "Determine the type of a list form.
 
@@ -138,7 +148,9 @@
 
 	     (_ t))))
 
-    (multiple-value-bind (type local decl) (function-information operator env)
+    (multiple-value-bind (type local decl)
+	(function-information operator (when *use-local-declared-types* env))
+
       (declare (ignore local))
 
       (case type
@@ -163,7 +175,9 @@
 		(cdr it)
 		t)))
 
-    (multiple-value-bind (type local decl) (variable-information variable env)
+    (multiple-value-bind (type local decl)
+	(variable-information variable (when *use-local-declared-types* env))
+
       (declare (ignore local))
 
       (case type
@@ -240,6 +254,14 @@
      type)
 
     (_ t)))
+
+;;;; LOAD-TIME-VALUE
+
+(defmethod special-form-type ((operator (eql 'cl:load-time-value)) operands env)
+  (match operands
+    ((list* value _)
+     (let ((*use-local-declared-types* nil))
+       (form-type value env)))))
 
 
 ;;;; SETQ
