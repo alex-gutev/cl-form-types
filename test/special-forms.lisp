@@ -687,8 +687,11 @@
 (test setq-malformed-forms
   "Test FORM-TYPE on malformed SETQ forms"
 
-  (is-form-type t (setq a) :strict t)
-  (is-form-type t (setq a 1 2) :strict t))
+  (signals malformed-form-error
+    (form-type '(setq a) nil))
+
+  (signals malformed-form-error
+    (form-type '(setq a 1 2) nil)))
 
 (test setq-variable-forms
   "Test FORM-TYPE on SETQ forms which return variable"

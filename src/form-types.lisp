@@ -28,6 +28,40 @@
 
 (in-package :cl-form-types)
 
+(define-condition malformed-form-error (error)
+  ((form :initarg :form
+	 :reader form))
+
+  (:documentation
+   "Condition signalling that a form passed to FORM-TYPE is malformed."))
+
+(defun return-default-type (&optional (type t))
+  "Invoke the RETURN-DEFAULT-TYPE restart for `MALFORMED-FORM-ERROR' conditions.
+
+   This restart returns the type TYPE for the type of the malformed
+   form."
+
+  (invoke-restart 'return-default-type type))
+
+(defmacro with-default-type-restart (&body forms)
+  "Evaluate forms in a RESTART-CASE with the RETURN-DEFAULT-TYPE
+   restart established."
+
+  (with-gensyms (type)
+    `(restart-case (progn ,@forms)
+       (return-default-type (,type) ,type))))
+
+(defmacro match-form (form &body clauses)
+  "Like MATCH but with a default clause which signals a
+   `MALFORMED-FORM-ERROR' condition."
+
+  (with-gensyms (whole)
+    `(match ,form
+       ,@clauses
+       (,whole
+	(error 'malformed-form-error :form ,whole)))))
+
+
 (defun form-types (forms env)
   "Determines the type of each form in FORMS.
 
@@ -111,7 +145,7 @@
 	  ((list* op args)
 	   (list-form-type op args env))
 
-	  ((satisfies symbolp)
+	  ((type symbol)
 	   (variable-type form env))
 
 	  ((guard value (constantp value env))
@@ -140,6 +174,22 @@
    ARGUMENTS is the list of arguments following the operator.
 
    ENV is the environment in which the form occurs."
+
+  (match operator
+    ((type symbol)
+     (function-call-expression-type operator arguments env))
+
+    (_ t)))
+
+(defun function-call-expression-type (operator arguments env)
+  "Determine the type of a function call expression.
+
+   OPERATOR is the expression operator, which may be a special
+   operator.
+
+   ARGUMENTS is the list of arguments following the operator.
+
+   ENV is the environment in which the expression is found."
 
   (flet ((get-ftype (decl)
 	   (match (cdr (assoc 'ftype decl))
@@ -223,15 +273,18 @@
 ;;;; QUOTE and FUNCTION
 
 (defmethod special-form-type ((operator (eql 'cl:quote)) operands env)
-  (match operands
-    ((list thing)
-     (constant-type thing))
-
-    (_ t)))
+  (with-default-type-restart
+    (match-form operands
+      ((list thing)
+       (constant-type thing)))))
 
 (defmethod special-form-type ((operator (eql 'cl:function)) operands env)
   (match operands
-    ((list name)
+    ((list (and
+	    (or (type symbol)
+		(list 'cl:setf (type symbol)))
+	    name))
+
      (multiple-value-bind (type local decl)
 	 (function-information name env)
 
@@ -249,101 +302,97 @@
 ;;;; THE
 
 (defmethod special-form-type ((operator (eql 'cl:the)) operands env)
-  (match operands
-    ((list type _)
-     type)
-
-    (_ t)))
+  (with-default-type-restart
+    (match-form operands
+      ((list type _)
+       type))))
 
 ;;;; LOAD-TIME-VALUE
 
 (defmethod special-form-type ((operator (eql 'cl:load-time-value)) operands env)
-  (match operands
-    ((list* value _)
-     (let ((*use-local-declared-types* nil))
-       (form-type value env)))))
+  (with-default-type-restart
+    (match-form operands
+      ((list* value _)
+       (let ((*use-local-declared-types* nil))
+	 (form-type value env))))))
 
 
 ;;;; SETQ
 
 (defmethod special-form-type ((operator (eql 'cl:setq)) operands env)
-  (if (and (proper-list-p operands)
-	   (evenp (length operands)))
-
-      (form-type (lastcar operands) env)
-      t))
+  (with-default-type-restart
+    (match-form operands
+      ((guard operands
+	      (and (proper-list-p operands)
+		   (evenp (length operands))))
+       (form-type (lastcar operands) env)))))
 
 ;;;; Conditionals
 
 (defmethod special-form-type ((operator (eql 'cl:if)) operands env)
-  (match operands
-    ((list _ if-true if-false)
-     `(or ,(form-type if-true env)
-	  ,(form-type if-false env)))
+  (with-default-type-restart
+    (match-form operands
+      ((list _ if-true if-false)
+       `(or ,(form-type if-true env)
+	    ,(form-type if-false env)))
 
-    ((list _ if-true)
-     `(or ,(form-type if-true env) null))
-
-    (_ t)))
+      ((list _ if-true)
+       `(or ,(form-type if-true env) null)))))
 
 ;;;; Multiple value call and PROG1
 
 (defmethod special-form-type ((operator (eql 'cl:multiple-value-prog1)) operands env)
-  (match operands
-    ((list* first-form _)
-     (form-type first-form env))
-
-    (_ t)))
+  (with-default-type-restart
+    (match-form operands
+      ((list* first-form _)
+       (form-type first-form env)))))
 
 
 ;;; Grouping Forms
 
 (defmethod special-form-type ((operator (eql 'cl:progn)) operands env)
-  (typecase operands
-    (proper-list
-     (form-type (lastcar operands) env))
-
-    (otherwise t)))
+  (with-default-type-restart
+    (match-form operands
+      ((type proper-list)
+       (form-type (lastcar operands) env)))))
 
 (defmethod special-form-type ((operator (eql 'cl:progv)) operands env)
-  (match operands
-    ((list* _ _ (and (type proper-list) forms))
-     (form-type (lastcar forms) env))
-
-    (_ t)))
+  (with-default-type-restart
+    (match-form operands
+      ((list* _ _ (and (type proper-list) forms))
+       (form-type (lastcar forms) env)))))
 
 (defmethod special-form-type ((operator (eql 'cl:eval-when)) operands env)
-  (match operands
-    ((list* situation (and (type proper-list) forms))
-     (if (or (member :execute situation)
-	     (member 'eval situation))
-	 (form-type (lastcar forms) env)
-	 'null))
+  (with-default-type-restart
+    (match-form operands
+      ((list* (and (type proper-list) situation)
+	      (and (type proper-list) forms))
 
-    (_ t)))
+       (if (or (member :execute situation)
+	       (member 'eval situation))
+	   (form-type (lastcar forms) env)
+	   'null)))))
 
 (defmethod special-form-type ((operator (eql 'cl:unwind-protect)) operands env)
-  (match operands
-    ((list* form _)
-     (form-type form env))
-
-    (_ t)))
+  (with-default-type-restart
+    (match-form operands
+      ((list* form _)
+       (form-type form env)))))
 
 (defmethod special-form-type ((operator (eql 'cl:locally)) operands env)
-  (typecase operands
-    (proper-list
-     (multiple-value-bind (body declarations)
-	 (parse-body operands :documentation nil)
+  (with-default-type-restart
+    (match-form operands
+      ((type proper-list)
+       (multiple-value-bind (body declarations)
+	   (parse-body operands :documentation nil)
 
-       (form-type
-	(lastcar body)
-	(augment-environment
-	 env
-	 :variable (extract-declared-vars declarations)
-	 :function (extract-declared-funcs declarations)
-	 :declare (mappend #'cdr declarations)))))
-
-    (otherwise t)))
+	 (form-type
+	  (lastcar body)
+	  (augment-environment
+	   env
+	   :variable (extract-declared-vars declarations)
+	   :function (extract-declared-funcs declarations)
+	   :declare (mappend #'cdr declarations))))))))
 
 (defun extract-declared-vars (declarations)
   "Extract variable names from TYPE declaration expressions.
@@ -354,13 +403,18 @@
   (labels ((extract-vars (decl-expression)
 	     "Extract variable names from DECLARE TYPE expressions."
 
-	     (mappend #'extract-var (cdr decl-expression)))
+	     (match-form decl-expression
+	       ((list* _ (and (type proper-list) decls))
+		(mappend #'extract-var decls))))
 
 	   (extract-var (decl)
 	     "Extract variable names from TYPE declarations."
 
 	     (match decl
-	       ((list* 'type _ vars)
+	       ((list* 'type _
+		       (guard vars
+			      (and (proper-list-p vars)
+				   (every #'symbolp vars))))
 		vars))))
 
     (mappend #'extract-vars declarations)))
@@ -374,13 +428,24 @@
   (labels ((extract-funcs (decl-expression)
 	     "Extract function names from DECLARE FTYPE expressions."
 
-	     (mappend #'extract-func (cdr decl-expression)))
+	     (match-form decl-expression
+	       ((list* _ (and (type proper-list) decls))
+		(mappend #'extract-func decls))))
+
+	   (function-name-p (name)
+	     (match name
+	       ((or (type symbol)
+		    (list 'cl:setf (type symbol)))
+		t)))
 
 	   (extract-func (decl)
 	     "Extract function names from FTYPE declarations."
 
 	     (match decl
-	       ((list* 'ftype _ fns)
+	       ((list* 'ftype _
+		       (guard fns
+			      (and (proper-list-p fns)
+				   (every #'function-name-p fns))))
 		fns))))
 
     (mappend #'extract-funcs declarations)))
@@ -413,50 +478,48 @@
 ;;; Local Macro Definitions
 
 (defmethod special-form-type ((operator (eql 'cl:macrolet)) operands env)
-  (flet ((make-macro (def)
-	   (match def
-	     ((list* (and (type symbol) name)
-		     (and (type proper-list) lambda-list)
-		     (and (type proper-list) body))
+  (with-default-type-restart
+    (flet ((make-macro (def)
+	     (match-form def
+	       ((list* (and (type symbol) name)
+		       (and (type proper-list) lambda-list)
+		       (and (type proper-list) body))
 
-	      (list name (enclose-macro name lambda-list body env))))))
+		(list name (enclose-macro name lambda-list body env))))))
 
-   (match operands
-     ((list* (and (type proper-list) macros)
-	     (and (type proper-list) body))
+      (match-form operands
+	((list* (and (type proper-list) macros)
+		(and (type proper-list) body))
 
-      (multiple-value-bind (body declarations)
-	  (parse-body body :documentation nil)
+	 (multiple-value-bind (body declarations)
+	     (parse-body body :documentation nil)
 
-	(form-type
-	 (lastcar body)
-	 (augment-environment
-	  env
-	  :variable (extract-declared-vars declarations)
-	  :function (extract-declared-funcs declarations)
-	  :macro (mapcar #'make-macro macros)
-	  :declare (mappend #'cdr declarations)))))
-
-     (_ t))))
+	   (form-type
+	    (lastcar body)
+	    (augment-environment
+	     env
+	     :variable (extract-declared-vars declarations)
+	     :function (extract-declared-funcs declarations)
+	     :macro (mapcar #'make-macro macros)
+	     :declare (mappend #'cdr declarations)))))))))
 
 (defmethod special-form-type ((operator (eql 'cl:symbol-macrolet)) operands env)
-  (match operands
-    ((list* (and (type proper-list) symbol-macros)
-	    (and (type proper-list) body))
+  (with-default-type-restart
+    (match-form operands
+      ((list* (and (type proper-list) symbol-macros)
+	      (and (type proper-list) body))
 
-     (multiple-value-bind (body declarations)
-	 (parse-body body :documentation nil)
+       (multiple-value-bind (body declarations)
+	   (parse-body body :documentation nil)
 
-       (form-type
-	(lastcar body)
-	(augment-environment
-	 env
-	 :variable (extract-declared-vars declarations)
-	 :function (extract-declared-funcs declarations)
-	 :symbol-macro symbol-macros
-	 :declare (mappend #'cdr declarations)))))
-
-    (_ t)))
+	 (form-type
+	  (lastcar body)
+	  (augment-environment
+	   env
+	   :variable (extract-declared-vars declarations)
+	   :function (extract-declared-funcs declarations)
+	   :symbol-macro symbol-macros
+	   :declare (mappend #'cdr declarations))))))))
 
 
 ;;; Local Variable Binding Forms
@@ -474,35 +537,34 @@
 
    ENV is the environment in which the form is found."
 
-  (flet ((extract-var (binding)
-	   "Extract the variable name from a binding."
+  (with-default-type-restart
+    (flet ((extract-var (binding)
+	     "Extract the variable name from a binding."
 
-	   (match binding
-	     ((or (and (type symbol) variable)
-		  (list* (and (type symbol) variable) _))
+	     (match-form binding
+	       ((or (and (type symbol) variable)
+		    (list* (and (type symbol) variable) _))
 
-	      (list variable)))))
+		(list variable)))))
 
-    (match operands
-      ((list* (and (type proper-list) bindings)
-	      (and (type proper-list) body))
+      (match-form operands
+	((list* (and (type proper-list) bindings)
+		(and (type proper-list) body))
 
-       (multiple-value-bind (body declarations)
-	   (parse-body body :documentation nil)
+	 (multiple-value-bind (body declarations)
+	     (parse-body body :documentation nil)
 
-	 (form-type
-	  (lastcar body)
+	   (form-type
+	    (lastcar body)
 
-	  (augment-environment
-	   env
-	   :variable (-> (mappend #'extract-var bindings)
-			 (union (extract-declared-vars declarations)))
+	    (augment-environment
+	     env
+	     :variable (-> (mappend #'extract-var bindings)
+			   (union (extract-declared-vars declarations)))
 
-	   :function (extract-declared-funcs declarations)
+	     :function (extract-declared-funcs declarations)
 
-	   :declare (mappend #'cdr declarations)))))
-
-      (_ t))))
+	     :declare (mappend #'cdr declarations)))))))))
 
 
 ;;; Local Function Binding Forms
@@ -520,28 +582,29 @@
 
    ENV is the environment in which the form is found."
 
-  (flet ((extract-function (binding)
-	   "Extract the function name from a definition."
+  (with-default-type-restart
+    (flet ((extract-function (binding)
+	     "Extract the function name from a definition."
 
-	   (match binding
-	     ((list* (and (type symbol) name) _)
-	      (list name)))))
+	     (match-form binding
+	       ((list* (and (type symbol) name) _)
+		(list name)))))
 
-    (match operands
-      ((list* (and (type proper-list) functions)
-	      (and (type proper-list) body))
+      (match-form operands
+	((list* (and (type proper-list) functions)
+		(and (type proper-list) body))
 
-       (multiple-value-bind (body declarations)
-	   (parse-body body :documentation nil)
+	 (multiple-value-bind (body declarations)
+	     (parse-body body :documentation nil)
 
-	 (form-type
-	  (lastcar body)
+	   (form-type
+	    (lastcar body)
 
-	  (augment-environment
-	   env
-	   :variable (extract-declared-vars declarations)
+	    (augment-environment
+	     env
+	     :variable (extract-declared-vars declarations)
 
-	   :function (-> (mappend #'extract-function functions)
-			 (union (extract-declared-funcs declarations)))
+	     :function (-> (mappend #'extract-function functions)
+			   (union (extract-declared-funcs declarations)))
 
-	   :declare (mappend #'cdr declarations))))))))
+	     :declare (mappend #'cdr declarations)))))))))

@@ -32,7 +32,10 @@
 
   (:export :form-types
 	   :form-type
-	   :nth-form-type)
+	   :nth-form-type
+
+	   :malformed-form-error
+	   :return-default-type)
 
   (:documentation
    "Exports utilities for determining the types of common lisp
