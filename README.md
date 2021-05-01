@@ -1,4 +1,4 @@
-# cl-form-types
+# CL-FORM-TYPES
 
 This library provides functions for determine the value types of
 Common Lisp forms, based on type information stored in the
@@ -6,22 +6,44 @@ environment.
 
 Currently the types of the following forms can be determined:
 
-* A symbol naming a variable for which there is a `TYPE` declaration
-* A symbol naming a constant
-* A list where the `CAR` is a function for which there is an `FTYPE`
+* Literal values
+* Symbols naming variables for which there are `TYPE` declarations
+* Symbols naming constants
+* Lists where the `CAR` is a function for which there is an `FTYPE`
   declaration
-* A `THE` form
-* `PROGN` forms where the type of the last form in the body can be
-  determined
-* Macros and symbol-macros which expand to a form of which the type
-  can be determined.
+* `THE` forms
+
+Macros and symbol-macros are fully expanded and the following special
+forms are supported:
+
+* `EVAL-WHEN`
+* `FLET`
+* `FUNCTION`
+* `GO`
+* `IF`
+* `LABELS`
+* `LET`
+* `LET*`
+* `LOCALLY`
+* `MACROLET`
+* `MULTIPLE-VALUE-PROG1`
+* `PROGN`
+* `PROGV`
+* `QUOTE`
+* `RETURN-FROM`
+* `SETQ`
+* `SYMBOL-MACROLET`
+* `TAGBODY`
+* `THE`
+* `THROW`
+* `UNWIND-PROTECT`
 
 This library depends on
 [cl-environments](https://alex-gutev.github.io/cl-environments/) in
-order to extract information from the environment using the
-CLTL2 API. Check the library's documentation for information on how to use
-so that the type information is available across all implementations,
-and information on its limitations.
+order to extract information from the environment using the CLTL2
+API. Check the library's documentation for details on how to use so
+that the type information is available across all implementations, and
+details on its limitations.
 
 ## Package CL-FORM-TYPES
 
