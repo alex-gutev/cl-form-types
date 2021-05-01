@@ -24,6 +24,7 @@ forms are supported:
 * `LABELS`
 * `LET`
 * `LET*`
+* `LOAD-TIME-VALUE`
 * `LOCALLY`
 * `MACROLET`
 * `MULTIPLE-VALUE-PROG1`
