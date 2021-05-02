@@ -61,20 +61,32 @@
        (,whole
 	(error 'malformed-form-error :form ,whole)))))
 
+(defvar *constant-eql-types* nil
+  "Flag for whether EQL type specifiers should be returned for all constant forms.
 
-(defun form-types (forms env)
+   If NIL EQL types are only returned if a form evaluates to a
+   constant which is comparable with EQL, such as NUMBERS, CHARACTERS
+   and SYMBOLS. If T, an EQL type is returned for every form which
+   evaluates to a constant value.")
+
+(defun form-types (forms env &key ((:constant-eql-types *constant-eql-types*)))
   "Determines the type of each form in FORMS.
 
    FORMS is a list of forms.
 
    ENV is the environment in which the forms occur.
 
+   :CONSTANT-EQL-TYPES if a flag for whether EQL type specifiers
+   should be returned for all constant forms. If NIL EQL types
+   specifiers are only returned for constants which are comparable
+   with EQL, that is NUMBERS, CHARACTERS and SYMBOLS.
+
    Returns a list where each element is the type to which the
    corresponding form in FORMS evaluates to"
 
   (mapcar (rcurry #'form-type env) forms))
 
-(defun nth-form-type (form env &optional (n 0))
+(defun nth-form-type (form env &optional (n 0) *constant-eql-types*)
   "Determines the type of the N'th value of a form.
 
    The difference between this and FORM-TYPE is that, FORM-TYPE
@@ -86,6 +98,11 @@
    ENV is the environment in which the form occurs.
 
    N is the index of the return value of which to return the type.
+
+   CONSTANT-EQL-TYPES if a flag for whether EQL type specifiers
+   should be returned for all constant forms. If NIL EQL types
+   specifiers are only returned for constants which are comparable
+   with EQL, that is NUMBERS, CHARACTERS and SYMBOLS.
 
    Returns the type of the N'th return value of FORM. If there is no
    type information for the N'th value, that is FORM does not evaluate
@@ -126,17 +143,25 @@
 
     (extract-type (form-type form env))))
 
-(defun form-type (form env)
+(defun form-type (form env &key ((:constant-eql-types *constant-eql-types*)))
   "Determines the type of a form in an environment.
 
    FORM is the form of which to determine the type.
 
    ENV is the environment in which the form occurs.
 
+   :CONSTANT-EQL-TYPES if a flag for whether EQL type specifiers
+   should be returned for all constant forms. If NIL EQL types
+   specifiers are only returned for constants which are comparable
+   with EQL, that is NUMBERS, CHARACTERS and SYMBOLS.
+
    Returns the type of the value to which FORM evaluates to. Returns a
    VALUES type if FORM evaluates to multiple values. Returns T if the
    type could not be determined."
 
+  (form-type% form env))
+
+(defun form-type% (form env)
   (if (constantp form env)
       (handler-case
 	  (constant-type
@@ -155,7 +180,7 @@
   (multiple-value-bind (form expanded?) (macroexpand-1 form env)
     (cond
       (expanded?
-       (form-type form env))
+       (form-type% form env))
 
       ((constantp form env)
        (handler-case
@@ -285,10 +310,13 @@
 
    VALUE is the constant value."
 
-  (typecase value
-    ((or number character symbol) `(eql ,value))
-    (otherwise
-     (type-of value))))
+  (if *constant-eql-types*
+      `(eql ,value)
+
+      (typecase value
+	((or number character symbol) `(eql ,value))
+	(otherwise
+	 (type-of value)))))
 
 
 ;;; Special Form Types
@@ -352,7 +380,7 @@
   (match-form operands
     ((list* value _)
      (let ((*use-local-declared-types* nil))
-       (form-type value env)))))
+       (form-type% value env)))))
 
 
 ;;;; SETQ
@@ -362,25 +390,25 @@
     ((guard operands
 	    (and (proper-list-p operands)
 		 (evenp (length operands))))
-     (form-type (lastcar operands) env))))
+     (form-type% (lastcar operands) env))))
 
 ;;;; Conditionals
 
 (defmethod special-form-type ((operator (eql 'cl:if)) operands env)
   (match-form operands
     ((list _ if-true if-false)
-     `(or ,(form-type if-true env)
-	  ,(form-type if-false env)))
+     `(or ,(form-type% if-true env)
+	  ,(form-type% if-false env)))
 
     ((list _ if-true)
-     `(or ,(form-type if-true env) null))))
+     `(or ,(form-type% if-true env) null))))
 
 ;;;; Multiple value call and PROG1
 
 (defmethod special-form-type ((operator (eql 'cl:multiple-value-prog1)) operands env)
   (match-form operands
     ((list* first-form _)
-     (form-type first-form env))))
+     (form-type% first-form env))))
 
 
 ;;; Grouping Forms
@@ -388,12 +416,12 @@
 (defmethod special-form-type ((operator (eql 'cl:progn)) operands env)
   (match-form operands
     ((type proper-list)
-     (form-type (lastcar operands) env))))
+     (form-type% (lastcar operands) env))))
 
 (defmethod special-form-type ((operator (eql 'cl:progv)) operands env)
   (match-form operands
     ((list* _ _ (and (type proper-list) forms))
-     (form-type (lastcar forms) env))))
+     (form-type% (lastcar forms) env))))
 
 (defmethod special-form-type ((operator (eql 'cl:eval-when)) operands env)
   (match-form operands
@@ -402,13 +430,13 @@
 
      (if (or (member :execute situation)
 	     (member 'eval situation))
-	 (form-type (lastcar forms) env)
+	 (form-type% (lastcar forms) env)
 	 'null))))
 
 (defmethod special-form-type ((operator (eql 'cl:unwind-protect)) operands env)
   (match-form operands
     ((list* form _)
-     (form-type form env))))
+     (form-type% form env))))
 
 (defmethod special-form-type ((operator (eql 'cl:locally)) operands env)
   (match-form operands
@@ -416,7 +444,7 @@
      (multiple-value-bind (body declarations)
 	 (parse-body operands :documentation nil)
 
-       (form-type
+       (form-type%
 	(lastcar body)
 	(augment-environment
 	 env
@@ -539,7 +567,7 @@
        (multiple-value-bind (body declarations)
 	   (parse-body body :documentation nil)
 
-	 (form-type
+	 (form-type%
 	  (lastcar body)
 	  (augment-environment
 	   env
@@ -556,7 +584,7 @@
      (multiple-value-bind (body declarations)
 	 (parse-body body :documentation nil)
 
-       (form-type
+       (form-type%
 	(lastcar body)
 	(augment-environment
 	 env
@@ -597,7 +625,7 @@
        (multiple-value-bind (body declarations)
 	   (parse-body body :documentation nil)
 
-	 (form-type
+	 (form-type%
 	  (lastcar body)
 
 	  (augment-environment
@@ -639,7 +667,7 @@
        (multiple-value-bind (body declarations)
 	   (parse-body body :documentation nil)
 
-	 (form-type
+	 (form-type%
 	  (lastcar body)
 
 	  (augment-environment
