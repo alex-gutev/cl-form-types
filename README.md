@@ -50,12 +50,16 @@ details on its limitations.
 
 ### FORM-TYPE
 
-Function `FORM-TYPE FORM ENV`
+Function `FORM-TYPE FORM ENV &KEY CONSTANT-EQL-TYPES`
 
 Determine the type of a form in a given environment.
 
 * `FORM` - The form of which to determine the type
 * `ENV` - The environment in which the form is found
+* `CONSTANT-EQL-TYPES` - If true an `EQL` type specifier is returned
+  for all forms which evaluate to constant values. Otherwise (the
+  default) an `EQL` type specifier is returned only for those forms
+  which evaluate to a constant comparable with `EQL`.
 
 Returns the type specifier of the value to which `FORM` evaluates. If
 `FORM` evaluates to multiple values a `(VALUES ...)` type is
@@ -64,13 +68,17 @@ returned.
 
 ### NTH-FORM-TYPE
 
-Function `NTH-FORM-TYPE FORM ENV &OPTIONAL (N 0)`
+Function `NTH-FORM-TYPE FORM ENV &OPTIONAL (N 0) CONSTANT-EQL-TYPES`
 
 Determine the type of the nth return value of a form.
 
 * `FORM` - The form of which to determine the type
 * `ENV` - The environment in which the form is found
 * `N` - Index of the value, type of which, to return
+* `CONSTANT-EQL-TYPES` - If true an `EQL` type specifier is returned
+  for all forms which evaluate to constant values. Otherwise (the
+  default) an `EQL` type specifier is returned only for those forms
+  which evaluate to a constant comparable with `EQL`.
 
 Returns the type specifier of the `N`th value returned by `FORM`. If
 `FORM` only returns a single value or returns less values than `N`,
@@ -78,12 +86,16 @@ Returns the type specifier of the `N`th value returned by `FORM`. If
 
 ### FORM-TYPES
 
-Function `FORM-TYPES FORMS ENV`
+Function `FORM-TYPES FORMS ENV &KEY CONSTANT-EQL-TYPES`
 
 Determine the type of each form in a list.
 
 * `FORMS` - List of forms of which to determine the types
 * `ENV` - Environment in which the forms are found
+* `CONSTANT-EQL-TYPES` - If true an `EQL` type specifier is returned
+  for all forms which evaluate to constant values. Otherwise (the
+  default) an `EQL` type specifier is returned only for those forms
+  which evaluate to a constant comparable with `EQL`.
 
 Returns a list where each element is the type specifier of the
 corresponding form in `FORMS`.
