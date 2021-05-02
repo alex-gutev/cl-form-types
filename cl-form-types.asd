@@ -40,7 +40,8 @@
 	       #:alexandria
 	       #:anaphora
 	       #:optima
-	       #:arrows)
+	       #:arrows
+	       #:introspect-environment)
 
   :in-order-to ((asdf:test-op (asdf:test-op :cl-form-types/test))))
 

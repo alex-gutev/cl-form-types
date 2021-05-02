@@ -137,6 +137,21 @@
    VALUES type if FORM evaluates to multiple values. Returns T if the
    type could not be determined."
 
+  (if (constantp form env)
+      (handler-case
+	  (constant-type
+	   (constant-form-value form env))
+	(error () (expand-form-type form env)))
+
+      (expand-form-type form env)))
+
+(defun expand-form-type (form env)
+  "Determines the type of a form, in an environment, after macroexpand.
+
+   FORM is the form of which to determine the type.
+
+   ENV is the environment in which the form occurs."
+
   (multiple-value-bind (form expanded?) (macroexpand-1 form env)
     (cond
       (expanded?
@@ -165,13 +180,15 @@
 
    ENV is the environment in which FORM is found."
 
-  #+sbcl (sb-int:constant-form-value form env)
+  #+(or ccl sbcl cmucl)
+  (introspect-environment:constant-form-value form env)
 
-  ;; Assuming some implementation doesn't do something stupid like
-  ;; returning T from (CONSTANTP FORM ENV) when the form has
-  ;; side-effects but returns a constant value.
+  ;; Use the following as it has more chance of being successful, than
+  ;; a fallback to EVAL, due to evaluating FORM in the correct
+  ;; environment.
 
-  #-sbcl (eval form))
+  #-(or ccl sbcl cmucl)
+  (funcall (enclose `(lambda () ,form) env)))
 
 
 ;;; Basic Form Types
