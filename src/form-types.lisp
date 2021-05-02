@@ -138,20 +138,40 @@
    type could not be determined."
 
   (multiple-value-bind (form expanded?) (macroexpand-1 form env)
-    (if expanded?
-	(form-type form env)
+    (cond
+      (expanded?
+       (form-type form env))
 
-	(match form
-	  ((list* op args)
-	   (list-form-type op args env))
+      ((constantp form env)
+       (handler-case
+	   (constant-type (constant-form-value form env))
+	 (error () t)))
 
-	  ((type symbol)
-	   (variable-type form env))
+      (t
+       (match form
+	 ((type symbol)
+	  (variable-type form env))
 
-	  ((guard value (constantp value env))
-	   (constant-type value))
+	 ((list* op args)
+	  (list-form-type op args env))
 
-	  (_ t)))))
+	 (_ t))))))
+
+(defun constant-form-value (form env)
+  "Determine the value of a constant form.
+
+   FORM is the form of which to determine the value. Must be a form
+   for which CONSTANTP returns true.
+
+   ENV is the environment in which FORM is found."
+
+  #+sbcl (sb-int:constant-form-value form env)
+
+  ;; Assuming some implementation doesn't do something stupid like
+  ;; returning T from (CONSTANTP FORM ENV) when the form has
+  ;; side-effects but returns a constant value.
+
+  #-sbcl (eval form))
 
 
 ;;; Basic Form Types
