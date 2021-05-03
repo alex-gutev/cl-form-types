@@ -565,8 +565,8 @@
 
 (defmethod special-form-type ((operator (eql 'cl:the)) operands env)
   (match-form operands
-    ((list type _)
-     type)))
+    ((list type value-form)
+     (combine-values-types 'and type (form-type% value-form env)))))
 
 ;;;; LOAD-TIME-VALUE
 
@@ -591,11 +591,16 @@
 (defmethod special-form-type ((operator (eql 'cl:if)) operands env)
   (match-form operands
     ((list _ if-true if-false)
-     `(or ,(form-type% if-true env)
-	  ,(form-type% if-false env)))
+     (combine-values-types
+      'or
+      (form-type% if-true env)
+      (form-type% if-false env)))
 
     ((list _ if-true)
-     `(or ,(form-type% if-true env) null))))
+     (combine-values-types
+      'or
+      (form-type% if-true env)
+      'null))))
 
 ;;;; Multiple value call and PROG1
 

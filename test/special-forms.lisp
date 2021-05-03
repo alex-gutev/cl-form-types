@@ -58,7 +58,11 @@
 
   (is-form-type number (the number some-nonsense))
   (is-form-type (simple-array integer) (the (simple-array integer) (range 1 10)))
-  (is-form-type (array fixnum 2) (the (array fixnum 2) (identity-matrix 3))))
+  (is-form-type (array fixnum 2) (the (array fixnum 2) (identity-matrix 3)))
+
+  (is-form-type (and number (eql 5)) (the number 5))
+  (is-form-type (and number (eql 10))
+    (the (values number &optional integer) 10)))
 
 (test macro-the-forms
   "Test FORM-TYPE on macros which expand to THE forms"
