@@ -216,6 +216,200 @@
   (funcall (enclose `(lambda () ,form) env)))
 
 
+;;; VALUES Types
+
+(defstruct values-type-spec
+  "Parse VALUES type specifier.
+
+   TYPES is the list of all type specifiers in the order in which they
+   appear. Lambda list keywords are removed from this list.
+
+   OPTIONAL-START is the index at which the &OPTIONAL keyword is found
+   in the type specifier list. NIL if there is no &OPTIONAL keyword.
+
+   REST-P is true if the type specifier list contains an &REST keyword.
+
+   REST-TYPE is the &REST type specifier
+
+   ALLOW-OTHER-KEYS is true if the type specifier list contains the
+   keyword &ALLOW-OTHER-KEYS.
+
+   OTHER is a list of the elements following the last applicable valid
+   component of the VALUES type specifier list. If non-NIL, this
+   indicates a malformed VALUES type specifier."
+
+  types
+  optional-start
+  rest-p
+  rest-type
+  allow-other-keys
+  other)
+
+(defun parse-values-type (spec)
+  "Parse a VALUES type specifier into its components.
+
+   SPEC is the VALUES type specifier list following the VALUES
+   keyword.
+
+   Returns a `VALUES-TYPE-SPEC' object."
+
+  (let (optional-pos
+	rest-p
+	rest-type
+	allow-other-keys
+	rest-list)
+
+    (labels ((consume-types (types index)
+	       (match types
+		 ((list* '&optional types)
+		  (unless optional-pos
+		    (setf optional-pos index))
+
+		  (consume-types types (1+ index)))
+
+		 ((list* '&rest type rest)
+		  (setf rest-p t)
+		  (setf rest-type type)
+		  (setf rest-list (consume-lambda-keywords rest (+ 2 index)))
+		  nil)
+
+		 ((list '&rest)
+		  (setf rest-p t)
+		  (setf rest-type t)
+		  nil)
+
+		 ((list* '&allow-other-keys rest)
+		  (setf allow-other-keys index)
+		  (setf rest-list rest)
+		  nil)
+
+		 ((list* type rest)
+		  (cons type (consume-types rest (1+ index))))))
+
+	     (consume-lambda-keywords (list index)
+	       (match list
+		 ((list* '&allow-other-keys rest)
+		  (setf allow-other-keys index)
+		  rest)
+
+		 (_ list))))
+
+      (let ((types (consume-types spec 0)))
+	(make-values-type-spec
+	 :types types
+	 :optional-start optional-pos
+	 :rest-p rest-p
+	 :rest-type rest-type
+	 :allow-other-keys allow-other-keys
+	 :other rest-list)))))
+
+(defun combine-values-types (combinator type1 type2)
+  "Combine two type specifier using a combinator keyword.
+
+   If both types are a VALUES types, each corresponding value type is
+   combined into a list with the first element being COMBINATOR and
+   the next two elements being the type specifiers. If only one of the
+   types is a VALUES type, the other is treated as a VALUES type with
+   one value type.
+
+   If neither types are values types the result `(,COMBINATOR ,TYPE1
+   ,TYPE2) is returned.
+
+   COMBINATOR is the symbol naming the combinator.
+
+   TYPES1 and TYPES2 are the types to combine.
+
+   Returns the combined type specifier."
+
+  (labels ((combine (types1 types2)
+	     (let* ((spec1 (parse-values-type types1))
+		    (spec2 (parse-values-type types2)))
+
+	       (if (< (length (values-type-spec-types spec1))
+		      (length (values-type-spec-types spec2)))
+		   (combine-specs spec1 spec2)
+		   (combine-specs spec2 spec1))))
+
+	   (combine-specs (spec1 spec2)
+	     ;; SPEC1 has fewer types than SPEC2
+
+	     (with-accessors ((types1 values-type-spec-types)
+			      (rest-type values-type-spec-rest-type))
+		 spec1
+
+	       (with-accessors ((types2 values-type-spec-types))
+		   spec2
+
+		 (->
+		  (append
+		   (mapcar (curry #'list combinator) types1 types2)
+		   (mapcar (curry #'list combinator rest-type)
+			   (subseq types2 (length types1))))
+
+		  (add-optional-keyword spec1 spec2)
+		  (add-rest-keyword spec1 spec2)
+		  (add-allow-other-keys spec1 spec2)))))
+
+	   (add-optional-keyword (combined spec1 spec2)
+	     (with-accessors ((start1 values-type-spec-optional-start))
+		 spec1
+
+	       (with-accessors ((start2 values-type-spec-optional-start))
+		   spec2
+
+		 (cond
+		   ((and start1 start2)
+		    (add-&optional combined (min start1 start2)))
+
+		   ((or start1 start2)
+		    (add-&optional combined (or start1 start2)))
+
+		   (t
+		    combined)))))
+
+	   (add-&optional (types index)
+	     (append
+	      (subseq types 0 index)
+	      '(&optional)
+	      (subseq types index)))
+
+	   (add-rest-keyword (combined spec1 spec2)
+	     (with-accessors ((rest-p-1 values-type-spec-rest-p)
+			      (rest1 values-type-spec-rest-type))
+		 spec1
+
+	       (with-accessors ((rest-p-2 values-type-spec-rest-p)
+				(rest2 values-type-spec-rest-type))
+		   spec2
+
+		 (if (or rest-p-1 rest-p-2)
+		     (append combined `(&rest (,combinator ,rest1 ,rest2)))
+		     combined))))
+
+	   (add-allow-other-keys (combined spec1 spec2)
+	     (if (or (values-type-spec-allow-other-keys spec1)
+		     (values-type-spec-allow-other-keys spec2))
+		 (append combined '(&allow-other-keys))
+		 combined)))
+
+    (multiple-value-match (values type1 type2)
+      (((list* 'values types1)
+	(list* 'values types2))
+
+       (list* 'values (combine types1 types2)))
+
+      (((list* 'values types1) _)
+
+       (list* 'values (combine types1 (list type2))))
+
+      ((_ (list* 'values types2))
+
+       (list* 'values (combine (list type1) types2)))
+
+      ((_ _)
+       (list combinator type1 type2)))))
+
+
 ;;; Basic Form Types
 
 (defvar *use-local-declared-types* t

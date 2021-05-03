@@ -56,6 +56,7 @@
 		:serial t
 		:components
 		((:file "test")
+		 (:file "values-types")
 		 (:file "basic-forms")
 		 (:file "special-forms"))))
 
