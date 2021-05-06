@@ -134,7 +134,7 @@
 			   nil))
 		nil)
 
-	       ((list '&rest type)
+	       ((list* '&rest type _)
 		type)
 
 	       ((list* '&optional type rest)
