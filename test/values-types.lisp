@@ -60,7 +60,7 @@
 	 (every #'spec= (cdr expected) (cdr got)))))
 
 
-;;; Tests
+;;; Test Combining Value Types
 
 (test combine-simple-types
   "Test combining two simple types (no VALUES specifiers)"
@@ -237,3 +237,104 @@
 	'or
 	'(values integer &rest fixnum &allow-other-keys)
 	'(values &optional number)))))
+
+
+;;; Test Extracting Nth Value Type
+
+(test extract-value-type-simple-0
+  "Test extracting first value type from simple type specifier"
+
+  (is (equal
+       '(and integer (eql 10))
+       (nth-value-type '(and integer (eql 10)) 0))))
+
+(test extract-value-type-simple-1
+  "Test extracting 2nd value type from simple type specifier"
+
+  (is (equal
+       nil
+       (nth-value-type '(and integer (eql 10)) 1))))
+
+(test extract-value-type-values-0
+  "Test extracting first value type form VALUES type specifier"
+
+  (is (equal
+       'integer
+       (nth-value-type '(values integer string)))))
+
+(test extract-value-type-values-1
+  "Test extracting 2nd value type form VALUES type specifier"
+
+  (is (equal
+       'string
+       (nth-value-type '(values integer string) 1))))
+
+(test extract-value-type-values-2
+  "Test extracting 3rd value type form VALUES type specifier"
+
+  (is (equal
+       nil
+       (nth-value-type '(values integer string) 2))))
+
+(test extract-value-type-values-&optional-0
+  "Test extracting first type specifier from VALUES type with &OPTIONAL keyword"
+
+  (is (equal
+       'integer
+       (nth-value-type '(values &optional integer) 0))))
+
+(test extract-value-type-values-&optional-1
+  "Test extracting 2nd type specifier from VALUES type with &OPTIONAL keyword"
+
+  (is (equal
+       '(eql x)
+       (nth-value-type '(values integer &optional (eql x)) 1))))
+
+(test extract-value-type-values-&rest
+  "Test extracting type specifier from VALUES type with &REST keyword"
+
+  (is (equal
+       'float
+       (nth-value-type '(values integer &rest float) 10))))
+
+(test extract-value-type-values-&optional-&rest
+  "Test extracting type specifier from VALUES type with &OPTIONAL and &REST keyword"
+
+  (is (equal
+       'float
+       (nth-value-type '(values &optional integer &rest float) 1))))
+
+(test extract-value-type-values-&rest-&allow-other-keys
+  "Test extracting type specifier from VALUES type with &REST and &ALLOW-OTHER-KEYS keyword"
+
+  (is (equal
+       'number
+       (nth-value-type '(values &rest number &allow-other-keys) 3))))
+
+(test extract-value-type-values-&optional-end
+  "Test extracting type specifier from VALUES type with &OPTIONAL at end"
+
+  (is (equal
+       nil
+       (nth-value-type '(values symbol &optional) 1))))
+
+(test extract-value-type-values-&optional-&rest-end
+  "Test extracting type specifier from VALUES type with &OPTIONAL and &REST at end"
+
+  (is (equal
+       nil
+       (nth-value-type '(values symbol &optional &rest) 1))))
+
+(test extract-value-type-values-&rest-end
+  "Test extracting type specifier from VALUES type with &REST at end"
+
+  (is (equal
+       nil
+       (nth-value-type '(values symbol &rest) 2))))
+
+(test extract-value-type-values-&rest-&allow-other-keys-end
+  "Test extracting type specifier from VALUES type with &REST and &ALLOW-OTHER-KEYS at end"
+
+  (is (equal
+       nil
+       (nth-value-type '(values symbol &rest &allow-other-keys) 1))))
