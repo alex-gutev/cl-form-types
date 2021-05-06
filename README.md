@@ -50,7 +50,7 @@ details on its limitations.
 
 ### FORM-TYPE
 
-Function `FORM-TYPE FORM ENV &KEY CONSTANT-EQL-TYPES`
+Function `FORM-TYPE FORM ENV &KEY CONSTANT-EQL-TYPES EXPAND-COMPILER-MACROS`
 
 Determine the type of a form in a given environment.
 
@@ -60,6 +60,8 @@ Determine the type of a form in a given environment.
   for all forms which evaluate to constant values. Otherwise (the
   default) an `EQL` type specifier is returned only for those forms
   which evaluate to a constant comparable with `EQL`.
+* `EXPAND-COMPILER-MACROS` - If true compiler-macros are expanded in
+  FORM and its subforms before determining form types.
 
 Returns the type specifier of the value to which `FORM` evaluates. If
 `FORM` evaluates to multiple values a `(VALUES ...)` type is
@@ -68,7 +70,7 @@ returned.
 
 ### NTH-FORM-TYPE
 
-Function `NTH-FORM-TYPE FORM ENV &OPTIONAL (N 0) CONSTANT-EQL-TYPES`
+Function `NTH-FORM-TYPE FORM ENV &OPTIONAL (N 0) CONSTANT-EQL-TYPES EXPAND-COMPILER-MACROS`
 
 Determine the type of the nth return value of a form.
 
@@ -79,14 +81,31 @@ Determine the type of the nth return value of a form.
   for all forms which evaluate to constant values. Otherwise (the
   default) an `EQL` type specifier is returned only for those forms
   which evaluate to a constant comparable with `EQL`.
+* `EXPAND-COMPILER-MACROS` - If true compiler-macros are expanded in
+  FORM and its subforms before determining form types.
 
 Returns the type specifier of the `N`th value returned by `FORM`. If
 `FORM` only returns a single value or returns less values than `N`,
 `NIL` is returned.
 
+### NTH-VALUE-TYPE
+
+Function `NTH-VALUE-TYPE TYPE &OPTIONAL (N 0)`
+
+Extract the type of the nth return value from a `VALUES` type
+specifier.
+
+* `TYPE` - A type specifier. If not a `VALUES` type specifier it is
+  treated as a `VALUES` type specifier with of a single return value.
+* `N` - Index of the value of which to retrieve the type.
+
+Returns the nth value type or NIL if there is no information about the
+nth return value, that is the actual number of values in the type
+specifier is less than `N`.
+
 ### FORM-TYPES
 
-Function `FORM-TYPES FORMS ENV &KEY CONSTANT-EQL-TYPES`
+Function `FORM-TYPES FORMS ENV &KEY CONSTANT-EQL-TYPES EXPAND-COMPILER-MACROS`
 
 Determine the type of each form in a list.
 
@@ -96,6 +115,8 @@ Determine the type of each form in a list.
   for all forms which evaluate to constant values. Otherwise (the
   default) an `EQL` type specifier is returned only for those forms
   which evaluate to a constant comparable with `EQL`.
+* `EXPAND-COMPILER-MACROS` - If true compiler-macros are expanded in
+  FORM and its subforms before determining form types.
 
 Returns a list where each element is the type specifier of the
 corresponding form in `FORMS`.
