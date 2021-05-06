@@ -96,7 +96,7 @@ Extract the type of the nth return value from a `VALUES` type
 specifier.
 
 * `TYPE` - A type specifier. If not a `VALUES` type specifier it is
-  treated as a `VALUES` type specifier with of a single return value.
+  treated as a `VALUES` type specifier of a single return value.
 * `N` - Index of the value of which to retrieve the type.
 
 Returns the nth value type or NIL if there is no information about the
