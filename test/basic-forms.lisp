@@ -58,6 +58,11 @@
 (defun inc (n)
   (1+ n))
 
+(define-compiler-macro inc (&whole form n)
+  (if (constantp n)
+      ''x
+      form))
+
 (declaim (ftype (function (number) number) inc))
 
 (defmacro pass-form (form)
@@ -157,3 +162,14 @@
       (is-form-type number (local-pass inc-100))
       (is-form-type string (local-pass "Hello"))
       (is-form-type number (local-pass (inc-twice (* inc-100 z)))))))
+
+(test compiler-macro-expansion
+  "Test FORM-TYPE with expansion of compiler-macros"
+
+  (is-form-type (eql x)
+    (inc 50)
+    :expand-compiler-macros t)
+
+  (is-form-type number
+    (inc z)
+    :expand-compiler-macros t))

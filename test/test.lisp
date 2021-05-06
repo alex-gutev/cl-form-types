@@ -72,7 +72,7 @@
 		  `',(multiple-value-list (progn ,@forms))))
        (,expand))))
 
-(defmacro is-form-type (type &body (form &key strict) &environment env)
+(defmacro is-form-type (type &body (form &key strict expand-compiler-macros) &environment env)
   "Check that a form is of a given type, by FORM-TYPE, in its environment.
 
    TYPE (not evaluated) is the expected form type, which is be
@@ -85,7 +85,7 @@
    If STRICT is true the type returned by FORM-TYPE must equal TYPE
    exactly, by EQUAL."
 
-  (let ((form-type (nth-form-type form env)))
+  (let ((form-type (nth-form-type form env 0 nil expand-compiler-macros)))
     `(is (,(if strict 'equal 'form-type=)
 	   ',type
 	   ',form-type)
