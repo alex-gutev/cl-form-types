@@ -33,6 +33,7 @@
   (:export :form-types
 	   :form-type
 	   :nth-form-type
+	   :nth-value-type
 
 	   :malformed-form-error
 	   :return-default-type)

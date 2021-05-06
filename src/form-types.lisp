@@ -109,39 +109,50 @@
    to multiple values or evaluates to less values than N, NIL is
    returned."
 
-  (labels ((extract-type (type)
-	     (match type
-	       ((list* 'values types)
-		(nth-type types n))
+  (nth-value-type (form-type form env) n))
 
-	       ((list 'not type)
-		`(not ,(extract-type type)))
+(defun nth-value-type (type &optional (n 0))
+  "Extract the type of the N'th return value.
 
-	       ((list* (and (or 'or 'and) op)
-		       types)
-		`(,op ,@(mapcar #'extract-type types)))
+   If TYPE is a VALUES type specifier, returns the type of the N'th
+   value, otherwise TYPE is treated as a VALUES type specifier with a
+   single value type.
 
-	       (type
-		(if (zerop n)
-		    type
-		    nil))))
+   TYPE is the type specifier.
 
-	   (nth-type (types n)
+   N is the index of the return value of which to return the type.
+
+   Returns the N'th value type or NIL if there is no information about
+   the N'th return value."
+
+  (labels ((nth-type (types n)
 	     (match types
+	       ((list* (or '&optional '&rest '&allow-other-keys)
+		       (or '(&optional)
+			   '(&rest)
+			   '(&allow-other-keys)
+			   nil))
+		nil)
+
 	       ((list '&rest type)
 		type)
 
-	       ((list* '&optional type _)
+	       ((list* '&optional type rest)
 		(if (zerop n)
 		    type
-		    (nth-type (cdr types) n)))
+		    (nth-type rest (1- n))))
 
 	       ((list* type rest)
 		(if (zerop n)
 		    type
 		    (nth-type rest (1- n)))))))
+    (match type
+      ((list* 'values types)
+       (nth-type types n))
 
-    (extract-type (form-type form env))))
+      (_
+       (when (zerop n)
+	 type)))))
 
 (defun form-type (form env &key ((:constant-eql-types *constant-eql-types*)))
   "Determines the type of a form in an environment.
