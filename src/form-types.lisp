@@ -73,7 +73,7 @@
   "Flag for whether compiler-macros should be expanded prior to
    determining form types.")
 
-(defun form-types (forms env &key ((:constant-eql-types *constant-eql-types*)))
+(defun form-types (forms env &key ((:constant-eql-types *constant-eql-types*)) ((:expand-compiler-macros *expand-compiler-macros*)))
   "Determines the type of each form in FORMS.
 
    FORMS is a list of forms.
@@ -85,12 +85,16 @@
    specifiers are only returned for constants which are comparable
    with EQL, that is NUMBERS, CHARACTERS and SYMBOLS.
 
+   :EXPAND-COMPILER-MACROS is a flag, which if true, compiler-macros
+   are expanded prior to determining the type of FORM or a subform of
+   it.
+
    Returns a list where each element is the type to which the
    corresponding form in FORMS evaluates to"
 
-  (mapcar (rcurry #'form-type env) forms))
+  (mapcar (rcurry #'form-type% env) forms))
 
-(defun nth-form-type (form env &optional (n 0) *constant-eql-types*)
+(defun nth-form-type (form env &optional (n 0) *constant-eql-types* *expand-compiler-macros*)
   "Determines the type of the N'th value of a form.
 
    The difference between this and FORM-TYPE is that, FORM-TYPE
@@ -108,12 +112,16 @@
    specifiers are only returned for constants which are comparable
    with EQL, that is NUMBERS, CHARACTERS and SYMBOLS.
 
+   EXPAND-COMPILER-MACROS is a flag, which if true, compiler-macros
+   are expanded prior to determining the type of FORM or a subform of
+   it.
+
    Returns the type of the N'th return value of FORM. If there is no
    type information for the N'th value, that is FORM does not evaluate
    to multiple values or evaluates to less values than N, NIL is
    returned."
 
-  (nth-value-type (form-type form env) n))
+  (nth-value-type (form-type% form env) n))
 
 (defun nth-value-type (type &optional (n 0))
   "Extract the type of the N'th return value.
