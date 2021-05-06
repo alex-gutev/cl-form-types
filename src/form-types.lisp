@@ -193,11 +193,6 @@
       (expanded?
        (form-type% form env))
 
-      ((constantp form env)
-       (handler-case
-	   (constant-type (constant-form-value form env))
-	 (error () t)))
-
       (t
        (match form
 	 ((type symbol)
