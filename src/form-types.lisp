@@ -69,6 +69,10 @@
    and SYMBOLS. If T, an EQL type is returned for every form which
    evaluates to a constant value.")
 
+(defvar *expand-compiler-macros* nil
+  "Flag for whether compiler-macros should be expanded prior to
+   determining form types.")
+
 (defun form-types (forms env &key ((:constant-eql-types *constant-eql-types*)))
   "Determines the type of each form in FORMS.
 
@@ -154,17 +158,21 @@
        (when (zerop n)
 	 type)))))
 
-(defun form-type (form env &key ((:constant-eql-types *constant-eql-types*)))
+(defun form-type (form env &key ((:expand-compiler-macros *expand-compiler-macros*)) ((:constant-eql-types *constant-eql-types*)))
   "Determines the type of a form in an environment.
 
    FORM is the form of which to determine the type.
 
    ENV is the environment in which the form occurs.
 
-   :CONSTANT-EQL-TYPES if a flag for whether EQL type specifiers
+   :CONSTANT-EQL-TYPES is a flag for whether EQL type specifiers
    should be returned for all constant forms. If NIL EQL types
    specifiers are only returned for constants which are comparable
    with EQL, that is NUMBERS, CHARACTERS and SYMBOLS.
+
+   :EXPAND-COMPILER-MACROS is a flag, which if true, compiler-macros
+   are expanded prior to determining the type of FORM or a subform of
+   it.
 
    Returns the type of the value to which FORM evaluates to. Returns a
    VALUES type if FORM evaluates to multiple values. Returns T if the
@@ -467,12 +475,36 @@
 
       (case type
 	(:function
-	 (get-ftype decl))
+	 (aif (expand-compiler-macros operator arguments env)
+	      (form-type% it env)
+	      (get-ftype decl)))
 
 	(:special-form
 	 (special-form-type operator arguments env))
 
 	(otherwise t)))))
+
+(defun expand-compiler-macros (operator arguments env)
+  "Expand compiler-macros in a function call expression.
+
+   Only expands compiler macros if *EXPAND-COMPILER-MACROS is set.
+
+   OPERATOR is the form operator.
+
+   ARGUMENTS is the argument list of the form.
+
+   ENV is the environment in which the form is found.
+
+   Returns the compiler-macro-expanded form or NIL if there is no
+   compiler-macro for OPERATOR."
+
+  (when-let* ((fn (and *expand-compiler-macros*
+		       (compiler-macro-function operator env)))
+
+	      (form (funcall fn (cons operator arguments) env)))
+
+    (unless (equal form (cons operator arguments))
+      form)))
 
 (defun variable-type (variable env)
   "Determine the type of a variable.
