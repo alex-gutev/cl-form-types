@@ -34,6 +34,7 @@
 	   :form-type
 	   :nth-form-type
 	   :nth-value-type
+	   :custom-form-type
 
 	   :malformed-form-error
 	   :return-default-type)

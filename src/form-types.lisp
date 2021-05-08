@@ -444,6 +444,26 @@
    evaluated in the global environment, therefore it does not have
    access to local variables.")
 
+(defgeneric custom-form-type (operator arguments env)
+  (:documentation
+   "Method for determining form types of custom forms.
+
+    This is useful for adding special type deduction logic for your
+    own functions, or for non-standard special forms.
+
+    OPERATOR is the form operator.
+
+    ARGUMENTS is the list of argument forms.
+
+    ENV is the environment in which the form is found. This might not
+    be a native environment but an augmented environment from
+    cl-environments.")
+
+  (:method (operator arguments env)
+    (declare (ignore operator arguments env))
+
+    t))
+
 (defun list-form-type (operator arguments env)
   "Determine the type of a list form.
 
@@ -455,42 +475,9 @@
 
   (match operator
     ((type symbol)
-     (function-call-expression-type operator arguments env))
+     (special-form-type operator arguments env))
 
     (_ t)))
-
-(defun function-call-expression-type (operator arguments env)
-  "Determine the type of a function call expression.
-
-   OPERATOR is the expression operator, which may be a special
-   operator.
-
-   ARGUMENTS is the list of arguments following the operator.
-
-   ENV is the environment in which the expression is found."
-
-  (flet ((get-ftype (decl)
-	   (match (cdr (assoc 'ftype decl))
-	     ((list 'function _ (and (not (eq '*)) return-type))
-	      return-type)
-
-	     (_ t))))
-
-    (multiple-value-bind (type local decl)
-	(function-information operator (when *use-local-declared-types* env))
-
-      (declare (ignore local))
-
-      (case type
-	(:function
-	 (aif (expand-compiler-macros operator arguments env)
-	      (form-type% it env)
-	      (get-ftype decl)))
-
-	(:special-form
-	 (special-form-type operator arguments env))
-
-	(otherwise t)))))
 
 (defun expand-compiler-macros (operator arguments env)
   "Expand compiler-macros in a function call expression.
@@ -578,6 +565,37 @@
 (defmethod special-form-type :around (operator operands env)
   (with-default-type-restart
     (call-next-method)))
+
+(defmethod special-form-type (operator arguments env)
+  "Determine the type of a function call expression.
+
+   OPERATOR is the expression operator, which may be a special
+   operator.
+
+   ARGUMENTS is the list of arguments following the operator.
+
+   ENV is the environment in which the expression is found."
+
+  (flet ((get-ftype (decl)
+	   (match (cdr (assoc 'ftype decl))
+	     ((list 'function _ (and (not (eq '*)) return-type))
+	      return-type)
+
+	     (_ t))))
+
+    (multiple-value-bind (type local decl)
+	(function-information operator (when *use-local-declared-types* env))
+
+      (declare (ignore local))
+
+      (case type
+	(:function
+	 (aif (expand-compiler-macros operator arguments env)
+	      (form-type% it env)
+	      (get-ftype decl)))
+
+	(otherwise
+	 (custom-form-type operator arguments env))))))
 
 ;;;; QUOTE and FUNCTION
 
