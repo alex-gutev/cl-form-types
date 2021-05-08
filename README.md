@@ -121,6 +121,31 @@ Determine the type of each form in a list.
 Returns a list where each element is the type specifier of the
 corresponding form in `FORMS`.
 
+### CUSTOM-FORM-TYPE
+
+Generic Function `CUSTOM-FORM-TYPE OPERATOR ARGUMENTS ENV`
+
+Generic function for determine the type of non-standard special forms
+and function calls.
+
+This function is not intended to be called directly but is intended to
+be extended with methods to add custom type deduction logic for
+function calls and non-standard special forms.
+
+* `OPERATOR` - Expression operator
+* `ARGUMENTS` - List of argument forms
+* `ENV` - Environment in which the form is found.
+
+**NOTE:** The environment argument is not necessarily a native
+environment object, but may be an augmented environment object,
+therefore it should not be passed directly to built in functions which
+expect an environment object but rather the equivalent functions from
+the `CL-ENVIRONMENTS-CL` package should be used, see
+<https://alex-gutev.github.io/cl-environments/#wrapper_functions>.
+
+Returns the value type of the form `(OPERATOR . ARGUMENTS)`, or `T` if
+it's type could not be determined.
+
 ### MALFORMED-FORM-ERROR
 
 Condition `MALFORMED-FORM-ERROR`
