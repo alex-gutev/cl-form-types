@@ -125,8 +125,8 @@ corresponding form in `FORMS`.
 
 Generic Function `CUSTOM-FORM-TYPE OPERATOR ARGUMENTS ENV`
 
-Generic function for determine the type of non-standard special forms
-and function calls.
+Generic function for determining the type of non-standard special
+forms and function calls.
 
 This function is not intended to be called directly but is intended to
 be extended with methods to add custom type deduction logic for
