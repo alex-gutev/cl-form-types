@@ -27,6 +27,7 @@ forms are supported:
 * `LOAD-TIME-VALUE`
 * `LOCALLY`
 * `MACROLET`
+* `MULTIPLE-VALUE-CALL`
 * `MULTIPLE-VALUE-PROG1`
 * `PROGN`
 * `PROGV`
