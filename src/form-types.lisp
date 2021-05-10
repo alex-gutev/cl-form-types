@@ -668,6 +668,15 @@
 
 ;;;; Multiple value call and PROG1
 
+(defmethod special-form-type ((operator (eql 'cl:multiple-value-call)) operands env)
+  (match-form operands
+    ((list* function _)
+     (match (nth-value-type (form-type% function env) 0)
+       ((list 'function _ (and (not (eq '*)) return-type))
+	return-type)
+
+       (_ t)))))
+
 (defmethod special-form-type ((operator (eql 'cl:multiple-value-prog1)) operands env)
   (match-form operands
     ((list* first-form _)

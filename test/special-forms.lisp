@@ -131,6 +131,37 @@
 	(is-form-type function (func unknown-func) :strict t)))))
 
 
+;;; MULTIPLE-VALUE-CALL Tests
+
+(test multiple-value-call-forms
+  "Test FORM-TYPE on MULTIPLE-VALUE-CALL forms"
+
+  (flet ((mul (x y) (* x y))
+	 (cat (a b) (concatenate 'string a b))
+	 (id (x) x))
+
+    (declare (ftype (function (number number) number) mul)
+	     (ftype (function (string string) string) cat)
+	     (ftype (function (number) *) id))
+
+    (macrolet ((func (name)
+		 `(pass-form #',name)))
+
+      (is-form-type number
+	(multiple-value-call #'mul (values x y)))
+
+      (is-form-type string
+	(multiple-value-call (func cat) "hello" world))
+
+      (is-form-type t
+	(multiple-value-call fn x y)
+	:strict t)
+
+      (is-form-type t
+	(multiple-value-call #'id var)
+	:strict t))))
+
+
 ;;; IF Form Tests
 
 (test if-forms
