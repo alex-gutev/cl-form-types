@@ -477,6 +477,13 @@
     ((type symbol)
      (special-form-type operator arguments env))
 
+    ((list 'cl:lambda lambda-list body)
+     (match (lambda-expression-type lambda-list body env)
+       ((list 'function _ (and (not '*) result))
+	result)
+
+       (_ t)))
+
     (_ t)))
 
 (defun expand-compiler-macros (operator arguments env)
@@ -623,7 +630,110 @@
 
 	 (otherwise t))))
 
+    ((list (list* 'cl:lambda lambda-list body))
+     (lambda-expression-type lambda-list body env))
+
     (_ 'cl:function)))
+
+(defun lambda-expression-type (lambda-list body env)
+  "Determine the function type of a lambda expression.
+
+   LAMBDA-LIST is the lambda-list of the lambda expression.
+
+   BODY is the body of the lambda expression (the remainder of the
+   expression following the lambda-list).
+
+   ENV is the environment in which the form containing the lambda
+   expression is found.
+
+   Returns a (FUNCTION ...) specifier."
+
+  (with-default-type-restart
+    (labels ((optional-vars (optional)
+	       (ematch optional
+		 ((list var _ nil)
+		  (list var))
+
+		 ((list var1 _ var2)
+		  (list var1 var2))))
+
+	     (key-vars (key)
+	       (ematch key
+		 ((list (list _ var) _ nil)
+		  (list var))
+
+		 ((list (list _ var1) _ var2)
+		  (list var1 var2))))
+
+	     (required-var-types (required env)
+	       (mapcar (rcurry #'var-type env) required))
+
+	     (optional-var-types (optional env)
+	       (when optional
+		 (list* '&optional
+			(mapcar (rcurry #'optional-var-type env) optional))))
+
+	     (key-var-types (key env)
+	       (mapcar (rcurry #'key-var-type env) key))
+
+	     (var-type (var env)
+	       (multiple-value-bind (var-type local declarations)
+		   (variable-information var env)
+
+		 (declare (ignore local))
+
+		 (or
+		  (when (member var-type '(:lexical :special))
+		    (cdr (assoc 'type declarations)))
+
+		  '*)))
+
+	     (optional-var-type (optional env)
+	       (var-type (first optional) env))
+
+	     (key-var-type (key env)
+	       (ematch key
+		 ((list (list keyword var) _ _)
+		  (list keyword
+			(var-type var env)))))
+
+	     (rest-var-type (var env)
+	       (match (var-type var env)
+		 ((list 'cons type _)
+		  type)
+
+		 (_ '*))))
+
+      (multiple-value-bind (required optional rest key allow-other-keys aux has-key-p)
+	  (parse-ordinary-lambda-list lambda-list)
+
+	(multiple-value-bind (body declarations)
+	    (parse-body body :documentation nil)
+
+	  (let ((env (augment-environment
+		      env
+		      :variable
+		      (append required
+			      (mappend #'optional-vars optional)
+			      (ensure-list rest)
+			      (mappend #'key-vars key)
+			      (mapcar #'cdr aux))
+
+		      :declare
+		      (mappend #'cdr declarations))))
+
+	    `(function
+
+	      ,(append
+		(required-var-types required env)
+		(optional-var-types optional env)
+		(when rest (list '&rest (rest-var-type rest env)))
+		(when has-key-p '(&key))
+		(key-var-types key env)
+		(when allow-other-keys '(&allow-other-keys)))
+
+
+	      ,(form-type% (lastcar body) env))))))))
 
 ;;;; THE
 
