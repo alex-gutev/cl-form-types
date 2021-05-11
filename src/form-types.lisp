@@ -28,7 +28,7 @@
 
 (in-package :cl-form-types)
 
-(define-condition malformed-form-error (error)
+(define-condition malformed-form-error (program-error)
   ((form :initarg :form
 	 :reader form))
 
