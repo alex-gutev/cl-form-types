@@ -198,6 +198,77 @@
       (pprint x)
       x)))
 
+(test lambda-operator-forms
+  "Test FORM-TYPE on forms with LAMBDA operators"
+
+  (is-form-type integer
+    ((cl:lambda (a b)
+       (declare (type integer a))
+       (declare (type fixnum b))
+
+       (pprint a)
+       (princ (* b a))
+       (the integer (+ a b)))
+
+     var1 2)))
+
+(test lambda-operator-optional-forms
+  "Test FORM-TYPE on forms with LAMBDA operator with optional arguments"
+
+  (is-form-type string
+    ((cl:lambda (name &optional (age 0) thing)
+       (declare (type string name)
+		(type number age))
+
+       (pprint name)
+       (progn
+	 (pprint age)
+
+	 (the (values string &optional)
+	      (format nil "~a ~a is ~a years old~%" thing name age))))
+
+     "bob" 10 type)))
+
+(test lambda-operator-optional-rest-forms
+  "Test FORM-TYPE on forms with LAMBDA operator with optional and rest arguments"
+
+  (is-form-type string
+    ((cl:lambda (x &optional y &rest z)
+       (declare (type string x)
+		(type integer y))
+       (declare (type (cons string *) z))
+
+       (pprint x)
+       (pprint y)
+       (the string (concatenate 'string x y)))
+
+     a1 a2 a3 a4 a5)))
+
+(test lambda-operator-key-forms
+  "Test FORM-TYPE on forms with LAMBDA operator with keyword arguments"
+
+  (is-form-type number
+    ((cl:lambda (x &key (y 2))
+       (declare (type number x y))
+
+       (pprint x)
+       (pprint y)
+
+       (macrolet ((num (thing)
+		    `(pass-form (the number ,thing))))
+
+	 (num (+ x y))))
+     var1))
+
+  (is-form-type number
+    ((cl:lambda (x &rest z &key key &allow-other-keys)
+       (declare (type number x))
+
+       (pprint x)
+       x)
+
+     arg1 arg2 :key arg3)))
+
 
 ;;; MULTIPLE-VALUE-CALL Tests
 
