@@ -131,6 +131,76 @@
 	(is-form-type function (func unknown-func) :strict t)))))
 
 
+;;; Lambda Expression Tests
+
+(test function-lambda-forms
+  "Test FORM-TYPE on FUNCTION with LAMBDA expression forms"
+
+  (is-form-type (function (*) t)
+    (lambda (x) x))
+
+  (is-form-type (function (integer fixnum) integer)
+    (lambda (a b)
+      (declare (type integer a))
+      (declare (type fixnum b))
+
+      (pprint a)
+      (princ (* b a))
+      (the integer (+ a b)))))
+
+(test function-lambda-optional-forms
+  "Test FORM-TYPE on FUNCTION with LAMBDA expression with optional arguments"
+
+  (is-form-type (function (string &optional number *) (values string &optional))
+    (lambda (name &optional (age 0) thing)
+      (declare (type string name)
+	       (type number age))
+
+      (pprint name)
+      (progn
+	(pprint age)
+
+	(the (values string &optional)
+	     (format nil "~a ~a is ~a years old~%" thing name age))))))
+
+(test function-lambda-optional-rest-forms
+  "Test FORM-TYPE on FUNCTION with LAMBDA expression with optional and rest arguments"
+
+  (is-form-type (function (string &optional integer &rest string) string)
+    (lambda (x &optional y &rest z)
+      (declare (type string x)
+	       (type integer y))
+      (declare (type (cons string *) z))
+
+      (pprint x)
+      (pprint y)
+      x)
+
+    :strict t))
+
+(test function-lambda-key-forms
+  "Test FORM-TYPE on FUNCTION with LAMBDA expression with keyword arguments"
+
+  (is-form-type (function (number &key (:y number)) number)
+    (lambda (x &key (y 2))
+      (declare (type number x y))
+
+      (pprint x)
+      (pprint y)
+      x)
+
+    :strict t)
+
+  (is-form-type (function (number &rest * &key (:key *) &allow-other-keys) number)
+    (lambda (x &rest z &key key &allow-other-keys)
+      (declare (type number x))
+
+      (pprint x)
+      x)
+
+    :strict t))
+
+
 ;;; MULTIPLE-VALUE-CALL Tests
 
 (test multiple-value-call-forms
