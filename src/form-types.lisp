@@ -477,7 +477,7 @@
     ((type symbol)
      (special-form-type operator arguments env))
 
-    ((list 'cl:lambda lambda-list body)
+    ((list* 'cl:lambda lambda-list body)
      (match (lambda-expression-type lambda-list body env)
        ((list 'function _ (and (not '*) result))
 	result)
