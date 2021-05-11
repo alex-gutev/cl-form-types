@@ -138,7 +138,8 @@
 	       ((_ _) nil)))
 
 	   (type-equal? (expected actual)
-	     (or (and (eq expected '*) (eq actual '*))
+	     (if (or (eq expected '*) (eq actual '*))
+		 (eq expected actual)
 		 (subtypep actual expected)))
 
 	   (type-match (expected actual)
