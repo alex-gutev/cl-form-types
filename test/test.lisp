@@ -98,19 +98,66 @@
 
   (labels ((values-type= (expected actual)
 	     (multiple-value-match (values expected actual)
-	       (('&rest '&rest) t)
+	       (((guard exp (member exp lambda-list-keywords))
+		 (guard got (member got lambda-list-keywords)))
+
+		(eq exp got))
+
 	       ((_ _) (type-equal? expected actual))))
 
+	   (function-type= (expected actual)
+	     (destructuring-bind (expected-args expected-result) expected
+	       (destructuring-bind (actual-args actual-result) actual
+		 (and (function-args= expected-args actual-args)
+		      (type-match expected-result actual-result)))))
+
+	   (function-args= (expected actual &optional in-key)
+	     (multiple-value-match (values expected actual)
+	       (((list* (guard exp-arg (member exp-arg lambda-list-keywords)) exp-rest)
+		 (list* (guard got-arg (member got-arg lambda-list-keywords)) got-rest))
+
+		(and (eq exp-arg got-arg)
+		     (function-args= exp-rest got-rest (eq exp-arg '&key))))
+
+	       (((guard (list* (list exp-key exp-type) exp-rest) in-key)
+		 (guard (list* (list got-key got-type) got-rest) in-key))
+
+		(and (eq exp-key got-key)
+		     (type-equal? exp-type got-type)
+		     (function-args= exp-rest got-rest t)))
+
+	       (((guard (list* exp exp-rest) (not in-key))
+		 (guard (list* got got-rest) (not in-key)))
+
+		(and
+		 (type-equal? exp got)
+		 (function-args= exp-rest got-rest in-key)))
+
+	       ((nil nil) t)
+
+	       ((_ _) nil)))
+
 	   (type-equal? (expected actual)
-	     (subtypep actual expected)))
+	     (or (and (eq expected '*) (eq actual '*))
+		 (subtypep actual expected)))
 
-    (multiple-value-match (values expected actual)
-      (((list* 'values expected)
-	(list* 'values actual))
-       (every #'values-type= expected actual))
+	   (type-match (expected actual)
+	     (multiple-value-match (values expected actual)
+	       (((list* 'values expected)
+		 (list* 'values actual))
 
-      ((_ (list* 'values actual _))
-       (type-equal? expected actual))
+		(and (>= (length actual) (length expected))
+		     (every #'values-type= expected actual)))
 
-      ((_ _)
-       (type-equal? expected actual)))))
+	       (((list* 'function expected)
+		 (list* 'function actual))
+
+		(function-type= expected actual))
+
+	       ((_ (list* 'values actual _))
+		(type-equal? expected actual))
+
+	       ((_ _)
+		(type-equal? expected actual)))))
+
+    (type-match expected actual)))

@@ -174,9 +174,7 @@
 
       (pprint x)
       (pprint y)
-      x)
-
-    :strict t))
+      (the string (concatenate 'string x y)))))
 
 (test function-lambda-key-forms
   "Test FORM-TYPE on FUNCTION with LAMBDA expression with keyword arguments"
@@ -187,18 +185,18 @@
 
       (pprint x)
       (pprint y)
-      x)
 
-    :strict t)
+      (macrolet ((num (thing)
+		   `(pass-form (the number ,thing))))
+
+	(num (+ x y)))))
 
   (is-form-type (function (number &rest * &key (:key *) &allow-other-keys) number)
     (lambda (x &rest z &key key &allow-other-keys)
       (declare (type number x))
 
       (pprint x)
-      x)
-
-    :strict t))
+      x)))
 
 
 ;;; MULTIPLE-VALUE-CALL Tests
