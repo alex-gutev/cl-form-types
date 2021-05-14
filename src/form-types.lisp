@@ -35,6 +35,17 @@
   (:documentation
    "Condition signalling that a form passed to FORM-TYPE is malformed."))
 
+(define-condition unknown-special-operator (program-error)
+  ((operator :initarg :operator
+	     :reader operator)
+
+   (operands :initarg :operands
+	     :reader operands))
+
+  (:documentation
+   "Condition representing that an special operator was encountered
+    which this library does not know how to process."))
+
 (defun return-default-type (&optional (type t))
   "Invoke the RETURN-DEFAULT-TYPE restart for `MALFORMED-FORM-ERROR' conditions.
 

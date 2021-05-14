@@ -34,7 +34,8 @@
 		:serial t
 		:components
 		((:file "package")
-		 (:file "form-types"))))
+		 (:file "form-types")
+		 (:file "block-types"))))
 
   :depends-on (#:cl-environments
 	       #:alexandria
