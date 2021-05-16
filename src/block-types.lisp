@@ -62,10 +62,14 @@
 	   (*in-block* t)
 	   (*local-fns* nil))
 
-       `(or
-	 ,(form-type% (lastcar forms) env)
-	 ,@(-> (walk-forms forms env)
-	     (remove-duplicates :test #'equal)))))))
+       (flet ((combine (type1 &optional (type2 nil type2-sp))
+		(if type2-sp
+		    (combine-values-types 'or type1 type2)
+		    type1)))
+
+	 (-<> (walk-forms forms env)
+	      (remove-duplicates :test #'equal)
+	      (reduce #'combine <> :initial-value (form-type% (lastcar forms) env))))))))
 
 
 ;;; Code Walking
