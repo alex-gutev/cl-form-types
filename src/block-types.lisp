@@ -220,6 +220,16 @@
   (declare (ignore operands env))
   types)
 
+(defmethod walk-list-form ((operator (eql 'cl:setq)) operands env types)
+  (nlet process ((types types)
+		 (operands operands))
+
+    (match-form operands
+      (nil types)
+
+      ((list* (type symbol) form rest)
+       (process (walk-form form env types) rest)))))
+
 
 ;;; Function forms
 
