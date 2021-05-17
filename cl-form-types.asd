@@ -38,6 +38,7 @@
 		 (:file "block-types"))))
 
   :depends-on (#:cl-environments
+	       #:agutil
 	       #:alexandria
 	       #:anaphora
 	       #:optima

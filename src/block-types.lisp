@@ -267,10 +267,72 @@
 
        (let* ((names (mapcar #'extract-function functions))
 	      (env (augment-environment env :function names))
-	      (ftypes (mapcar (rcurry #'walk-local-fn env nil) functions))
+	      (ftypes (local-function-types names functions env))
 	      (*local-fns* (append ftypes *local-fns*)))
 
 	 (walk-body body env types))))))
+
+(defun local-function-types (names functions env)
+  "Determine the types of the RETURN-FROM forms in lexical functions.
+
+   NAMES is the list of the function names.
+
+   FUNCTIONS is the list of the function definitions as they appear in
+   the FLET or LABELS form.
+
+   ENV is the environment in which the lexical function definitions occur."
+
+  (subst-local-function-types
+   (let ((*local-fns*
+	  (-> (mapcar
+	       (lambda (name)
+		 `(,name . ((call ,name))))
+	       names)
+
+	      (append *local-fns*))))
+
+     (mapcar (rcurry #'walk-local-fn env nil) functions))))
+
+(defun subst-local-function-types (ftypes)
+  "Substitute (CALL ...) types with actual types returned by the function.
+
+   In the types of the RETURN-FROM forms, located within a function,
+   types which reference the types of the RETURN-FROM forms in another
+   function `(CALL ...)` are replaced with the actual list of the
+   types of the RETURN-FROM forms in that function.
+
+   FTYPES is an association list with each entry of the form (FN
+   . TYPES) where FN is the function name and TYPES is the list of
+   type specifiers.
+
+   Returns the association list with the new RETURN-FORM form type
+   lists."
+
+  (labels ((replace-call-fn (ftypes fn)
+	     (let ((types (-> (cdr (assoc fn ftypes))
+			      (remove-call-fn fn))))
+
+	       (mapcar (rcurry #'replace-calls fn types) ftypes)))
+
+	   (remove-call-fn (types fn)
+	     (remove `(call ,fn) types :test #'equal))
+
+	   (replace-calls (entry fn new-types)
+	     (destructuring-bind (name . old-types) entry
+	       (cons name (mappend (rcurry #'replace-call fn new-types) old-types))))
+
+	   (replace-call (type fn types)
+	     (match type
+	       ((list 'call (eql fn))
+		types)
+
+	       (_ (list type)))))
+
+    (nlet process ((ftypes ftypes) (fns ftypes))
+      (if fns
+	  (-> (replace-call-fn ftypes (caar fns))
+	      (process (cdr fns)))
+	  ftypes))))
 
 (defun walk-local-fn (def env types)
   "Extract RETURN-FROM value types from a local named function definition.
