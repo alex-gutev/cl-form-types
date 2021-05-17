@@ -145,7 +145,7 @@
 
     :test type=))
 
-(test with-nested-return-from
+(test (with-nested-return-from :depends-on with-if)
   "Test FORM-TYPE on BLOCK with RETURN-FROM nested in RETURN-FROM"
 
   (is-form-type (member t1 t2 t3)
@@ -182,7 +182,7 @@
 
     :test type=))
 
-(test with-nested-flet
+(test (with-nested-flet :depends-on (and with-flet with-if))
   "Test FORM-TYPE on BLOCK with nested FLET form"
 
   (is-form-type (or (eql from-block) (eql from-g) (eql from-g1))
@@ -211,7 +211,7 @@
 
     :test type=))
 
-(test with-flet-return-from-in-lambda-list
+(test (with-flet-return-from-in-lambda-list :depends-on with-flet)
   "Test FORM-TYPE on BLOCK with FLET form with RETURN-FROM in lambda list"
 
   (is-form-type (or (eql l1) (eql l2) (eql l3) (eql l4) (eql l5) (eql default))
@@ -243,7 +243,7 @@
 
     :test type=))
 
-(test with-flet-nested-block
+(test (with-flet-nested-block :depends-on with-flet)
   "Test FORM-TYPE on BLOCK with FLET and BLOCK nested in it"
 
   (is-form-type (or (eql from-f1) (eql default))
@@ -290,7 +290,7 @@
 
     :test type=))
 
-(test with-nested-labels
+(test (with-nested-labels :depends-on (and with-labels with-if))
   "Test FORM-TYPE on BLOCK with nested LABELS forms"
 
   (is-form-type (or (eql from-block) (eql from-f) (eql from-g) (eql from-f1) (eql from-g1))
@@ -325,7 +325,7 @@
 
     :test type=))
 
-(test with-labels-return-from-in-lambda-list
+(test (with-labels-return-from-in-lambda-list :depends-on with-labels)
   "Test FORM-TYPE on BLOCK with LABELS form with RETURN-FROM in lambda list"
 
   (is-form-type (or (eql l1) (eql l2) (eql l3) (eql l4) (eql l5) (eql default))
@@ -357,7 +357,7 @@
 
     :test type=))
 
-(test with-labels-nested-block
+(test (with-labels-nested-block :depends-on with-labels)
   "Test FORM-TYPE on BLOCK with LABELS and BLOCK nested in it"
 
   (is-form-type (or (eql from-f1) (eql default))
@@ -381,7 +381,7 @@
 
 ;;; Test with FUNCTION forms
 
-(test with-function
+(test (with-function :depends-on with-flet)
   "Test FORM-TYPE on BLOCK with FUNCTION form"
 
   (is-form-type (member v1 v2)
@@ -427,7 +427,7 @@
 
 ;;; Test with LET/LET* forms
 
-(test with-let
+(test (with-let :depends-on with-if)
   "Test FORM-TYPE on BLOCK with LET forms"
 
   (is-form-type (or (eql in-init) (eql in-let) (eql in-last))
@@ -444,7 +444,7 @@
 
     :test type=))
 
-(test with-let*
+(test (with-let* :depends-on with-if)
   "Test FORM-TYPE on BLOCK with LET* forms"
 
   (is-form-type (or (eql in-init) (eql in-let) (eql in-last))
@@ -461,7 +461,7 @@
 
     :test type=))
 
-(test with-locally
+(test (with-locally :depends-on with-if)
   "Test FORM-TYPE on BLOCK with LOCALLY forms"
 
   (is-form-type (or (eql in-locally) (eql default-value))
@@ -665,7 +665,7 @@
 
      nil)))
 
-(test with-tagbody
+(test (with-tagbody :depends-on with-symbol-macrolet)
   "Test FORM-TYPE on BLOCK with TAGBODY forms"
 
   (is-form-type (member 1 2)
