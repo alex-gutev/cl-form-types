@@ -162,7 +162,7 @@ types.
 The number of arguments is deduced from the expression's lambda-list,
 with the types deduced from type declarations immediately within the
 expression body. If the type cannot be determined for an argument `*`
-is placed in its position with the function type specifier.
+is placed in its position within the function type specifier.
 
 The return value type is deduced from the return value type of the
 last form in the expression body. If this cannot be determined, `T` is
@@ -298,7 +298,7 @@ referenced:
 
 ;; Returns
 
-(or list even)
+(or list (eql even))
 ```
 
 **NOTE:** The type of the `RETURN-FROM` form inside the `TEST`
