@@ -38,6 +38,7 @@
 	   :custom-form-type
 
 	   :malformed-form-error
+	   :unknown-special-operator
 	   :return-default-type)
 
   (:documentation
