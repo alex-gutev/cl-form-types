@@ -125,10 +125,13 @@ it's type could not be determined.
 
 ### MALFORMED-FORM-ERROR
 
-Condition `MALFORMED-FORM-ERROR`
+Condition `MALFORMED-FORM-ERROR (PROGRAM-ERROR)`
 
 Condition signalled when a malformed form is passed to one of the
 `FORM-TYPE` functions.
+
+**NOTE:** Inherits from the `PROGRAM-ERROR` condition which may also
+be signalled.
 
 Slots:
 
