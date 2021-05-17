@@ -131,11 +131,28 @@ Condition signalled when a malformed form is passed to one of the
 `FORM-TYPE` functions.
 
 **NOTE:** Inherits from the `PROGRAM-ERROR` condition which may also
-be signalled.
+be signalled. Thus if you want to handle all conditions which may be
+signalled by `FORM-TYPE`, handle the `PROGRAM-ERROR` condition.
 
 Slots:
 
 * `FORM` - The malformed form.
+
+## UNKNOWN-SPECIAL-OPERATOR
+
+Condition `UNKNOWN-SPECIAL-OPERATOR (PROGRAM-ERROR)`
+
+Condition signalled when an unknown special operator is encountered.
+
+**NOTE:** This indicates the use of a non-standard,
+implementation-specific, special operator. This condition will never
+be raised for a standard CL operator.
+
+Slots:
+
+* `OPERATOR` - The special operator.
+* `OPERANDS` - The operands to the operator.
+
 
 ### RETURN-DEFAULT-TYPE
 
