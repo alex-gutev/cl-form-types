@@ -13,32 +13,8 @@ Currently the types of the following forms can be determined:
   declaration
 * `THE` forms
 
-Macros and symbol-macros are fully expanded and the following special
-forms are supported:
-
-* `EVAL-WHEN`
-* `FLET`
-* `FUNCTION`
-* `GO`
-* `IF`
-* `LABELS`
-* `LET`
-* `LET*`
-* `LOAD-TIME-VALUE`
-* `LOCALLY`
-* `MACROLET`
-* `MULTIPLE-VALUE-CALL`
-* `MULTIPLE-VALUE-PROG1`
-* `PROGN`
-* `PROGV`
-* `QUOTE`
-* `RETURN-FROM`
-* `SETQ`
-* `SYMBOL-MACROLET`
-* `TAGBODY`
-* `THE`
-* `THROW`
-* `UNWIND-PROTECT`
+Macros and symbol-macros are fully expanded and all special
+forms except `CATCH`, are supported.
 
 This library depends on
 [cl-environments](https://alex-gutev.github.io/cl-environments/) in
