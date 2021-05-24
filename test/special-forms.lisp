@@ -109,7 +109,8 @@
   "Test FORM-TYPE on FUNCTION forms"
 
   (flet ((mul (x y) (* x y)))
-    (declare (ftype (function (integer integer) integer) mul))
+    (declare (ftype (function (integer integer) integer) mul)
+	     (ignorable #'mul))
 
     (is-form-type (function (integer integer) integer) #'mul)
     (is-form-type function #'unknown-function :strict t)))
@@ -118,7 +119,8 @@
   "Test FORM-TYPE on macros which expand to FUNCTION forms"
 
   (flet ((flip (x) (/ x)))
-    (declare (ftype (function (integer) number) flip))
+    (declare (ftype (function (integer) number) flip)
+	     (ignorable #'flip))
 
     (macrolet ((func (name)
 		 `(pass-form #',name)))
@@ -281,7 +283,8 @@
 
     (declare (ftype (function (number number) number) mul)
 	     (ftype (function (string string) string) cat)
-	     (ftype (function (number) *) id))
+	     (ftype (function (number) *) id)
+	     (ignorable #'mul #'cat #'id))
 
     (macrolet ((func (name)
 		 `(pass-form #',name)))
@@ -338,7 +341,8 @@
   (flet ((flip (x) (reverse x))
 	 (mul (y z) (* y z)))
     (declare (ftype (function (string) string) flip)
-	     (ftype (function (number number) number) mul))
+	     (ftype (function (number number) number) mul)
+	     (ignorable #'flip #'mul))
 
     (is-form-type (or string number)
       (if (evenp a) (flip name) (mul a b)))
@@ -396,7 +400,8 @@
   ;; LOAD-TIME-VALUE form
 
   (flet ((rev-seq (seq) (reverse seq)))
-    (declare (ftype (function (sequence) sequence) rev-seq))
+    (declare (ftype (function (sequence) sequence) rev-seq)
+	     (ignorable #'rev-seq))
 
     (is-form-type t
       (load-time-value (rev-seq #(1 2 3 4 5)))
@@ -457,7 +462,8 @@
   (labels ((inc (a) (1+ a))
 	   (add (x y) (+ x y)))
     (declare (ftype (function (integer) integer) inc)
-	     (ftype (function (number number) number) add))
+	     (ftype (function (number number) number) add)
+	     (ignorable #'add #'inc))
 
     (is-form-type integer
       (progn
@@ -550,7 +556,8 @@
   (labels ((inc (a) (1+ a))
 	   (add (x y) (+ x y)))
     (declare (ftype (function (integer) integer) inc)
-	     (ftype (function (number number) number) add))
+	     (ftype (function (number number) number) add)
+	     (ignorable #'inc #'add))
 
     (is-form-type integer
       (progv nil nil
@@ -642,7 +649,8 @@
   (labels ((inc (a) (1+ a))
 	   (add (x y) (+ x y)))
     (declare (ftype (function (integer) integer) inc)
-	     (ftype (function (number number) number) add))
+	     (ftype (function (number number) number) add)
+	     (ignorable #'inc #'add))
 
     (is-form-type integer
       (multiple-value-prog1 (inc c)
@@ -740,7 +748,8 @@
 	   (add (x y) (+ x y)))
 
     (declare (ftype (function (integer) integer) inc)
-	     (ftype (function (number number) number) add))
+	     (ftype (function (number number) number) add)
+	     (ignorable #'inc #'add))
 
     (is-form-type integer
       (eval-when (:execute)
@@ -830,7 +839,8 @@
 	   (add (x y) (+ x y)))
 
     (declare (ftype (function (integer) integer) inc)
-	     (ftype (function (number number) number) add))
+	     (ftype (function (number number) number) add)
+	     (ignorable #'inc #'add))
 
     (is-form-type integer
       (unwind-protect (inc c)
@@ -889,7 +899,8 @@
 	   (apply #'symbolicate things)))
 
     (declare (ftype (function (string string) string) join)
-	     (ftype (function (&rest *) symbol) symb))
+	     (ftype (function (&rest *) symbol) symb)
+	     (ignorable #'join #'symb))
 
     (is-form-type string
       (setq x (symb 'hello 1)
@@ -952,7 +963,8 @@
 
   (let ((x 0.5) (y 2) (z 3/4))
     (declare (type integer y)
-	     (type number z))
+	     (type number z)
+	     (ignorable x y z))
 
     (symbol-macrolet ((greeting "hello world"))
 
@@ -984,6 +996,7 @@
 
   (labels ((neg (a) (- a))
 	   (sub (a b) (- a b)))
+    (declare (ignorable #'neg #'sub))
 
     (is-form-type t (cl:locally (neg x)) :strict t)
 
@@ -1098,7 +1111,8 @@
   "Test FORM-TYPE on MACROLET forms which return variable"
 
   (let ((x 1050))
-    (declare (type number x))
+    (declare (type number x)
+	     (ignorable x))
 
     (symbol-macrolet ((person-name "Joe"))
 
@@ -1123,7 +1137,8 @@
 	 (thing (str) (reverse str)))
 
     (declare (ftype (function (integer) integer) func)
-	     (ftype (function (sequence) sequence) thing))
+	     (ftype (function (sequence) sequence) thing)
+	     (ignorable #'func #'thing))
 
     (is-form-type integer
       (cl:macrolet ((thing (form)
@@ -1150,7 +1165,8 @@
   "Test FORM-TYPE on SYMBOL-MACROLET forms which return variable"
 
   (let ((x 1050))
-    (declare (type number x))
+    (declare (type number x)
+	     (ignorable x))
 
     (symbol-macrolet ((person-name "Joe"))
 
@@ -1173,7 +1189,8 @@
   "Test FORM-TYPE on SYMBOL-MACROLET forms which return function expression"
 
   (flet ((thing (seq) (reverse seq)))
-    (declare (ftype (function (sequence) sequence) thing))
+    (declare (ftype (function (sequence) sequence) thing)
+	     (ignorable #'thing))
 
     (is-form-type sequence
       (cl:symbol-macrolet ()
@@ -1226,7 +1243,8 @@
   "Test FORM-TYPE on LET forms which return function expression"
 
   (flet ((thing (seq) (reverse seq)))
-    (declare (ftype (function (sequence) sequence) thing))
+    (declare (ftype (function (sequence) sequence) thing)
+	     (ignorable #'thing))
 
     (is-form-type sequence
       (cl:let ((x 1) (y 2))
@@ -1278,7 +1296,8 @@
   "Test FORM-TYPE on LET* forms which return function expression"
 
   (labels ((thing (seq) (reverse seq)))
-    (declare (ftype (function (sequence) sequence) thing))
+    (declare (ftype (function (sequence) sequence) thing)
+	     (ignorable #'thing))
 
     (is-form-type sequence
       (cl:let* ((x 1) (y 2))
@@ -1330,7 +1349,8 @@
   "Test FORM-TYPE on FLET forms which return function expression"
 
   (flet ((thing (seq) (reverse seq)))
-    (declare (ftype (function (sequence) sequence) thing))
+    (declare (ftype (function (sequence) sequence) thing)
+	     (ignorable #'thing))
 
     (is-form-type sequence
       (cl:flet ((inc (x) (1+ x)))
@@ -1385,7 +1405,8 @@
   "Test FORM-TYPE on LABELS forms which return function expression"
 
   (labels ((thing (seq) (reverse seq)))
-    (declare (ftype (function (sequence) sequence) thing))
+    (declare (ftype (function (sequence) sequence) thing)
+	     (ignorable #'thing))
 
     (is-form-type sequence
       (cl:labels ((inc (x) (1+ x)))

@@ -140,7 +140,8 @@
   "Test FORM-TYPE on function call expressions"
 
   (flet ((add (a b) (+ a b)))
-    (declare (ftype (function (integer integer) integer) add))
+    (declare (ftype (function (integer integer) integer) add)
+	     (ignorable #'add))
 
     (is-form-type number (inc x))
     (is-form-type integer (add (inc x) y))
