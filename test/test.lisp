@@ -115,7 +115,7 @@
 
 	   (function-type= (expected actual)
 	     (destructuring-bind (expected-args expected-result) expected
-	       (destructuring-bind (actual-args actual-result) actual
+	       (destructuring-bind (&optional actual-args actual-result) actual
 		 (and (function-args= expected-args actual-args)
 		      (type-match expected-result actual-result)))))
 
@@ -146,9 +146,10 @@
 	       ((_ _) nil)))
 
 	   (type-equal? (expected actual)
-	     (if (or (eq expected '*) (eq actual '*))
-		 (eq expected actual)
-		 (subtypep actual expected)))
+	     (multiple-value-match (values expected actual)
+	       (((or '* t) (or '* t)) t)
+	       ((_ _)
+		(subtypep actual expected))))
 
 	   (type-match (expected actual)
 	     (multiple-value-match (values expected actual)
