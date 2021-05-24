@@ -53,7 +53,7 @@
 
 ;;; THE Form Tests
 
-(test the-forms
+(test (the-forms :compile-at :run-time)
   "Test FORM-TYPE on THE forms"
 
   (is-form-type number (the number some-nonsense))
@@ -64,7 +64,7 @@
   (is-form-type (and number (eql 10))
     (the (values number &optional integer) 10)))
 
-(test macro-the-forms
+(test (macro-the-forms :compile-at :run-time)
   "Test FORM-TYPE on macros which expand to THE forms"
 
   (macrolet ((local-pass (form)
@@ -79,14 +79,14 @@
 
 ;;; QUOTE Form Tests
 
-(test quote-forms
+(test (quote-forms :compile-at :run-time)
   "Test FORM-TYPE on QUOTE forms"
 
   (is-form-type (eql x) 'x)
   (is-form-type list '(1 2 3))
   (is-form-type string '"hello"))
 
-(test macro-quote-forms
+(test (macro-quote-forms :compile-at :run-time)
   "Test FORM-TYPE on macros which expand to QUOTE forms"
 
   (macrolet ((local-pass (form)
@@ -105,7 +105,7 @@
 
 ;;; FUNCTION Form Tests
 
-(test function-forms
+(test (function-forms :compile-at :run-time)
   "Test FORM-TYPE on FUNCTION forms"
 
   (flet ((mul (x y) (* x y)))
@@ -114,7 +114,7 @@
     (is-form-type (function (integer integer) integer) #'mul)
     (is-form-type function #'unknown-function :strict t)))
 
-(test macro-function-forms
+(test (macro-function-forms :compile-at :run-time)
   "Test FORM-TYPE on macros which expand to FUNCTION forms"
 
   (flet ((flip (x) (/ x)))
@@ -133,7 +133,7 @@
 
 ;;; Lambda Expression Tests
 
-(test function-lambda-forms
+(test (function-lambda-forms :compile-at :run-time)
   "Test FORM-TYPE on FUNCTION with LAMBDA expression forms"
 
   (is-form-type (function (*) t)
@@ -148,7 +148,7 @@
       (princ (* b a))
       (the integer (+ a b)))))
 
-(test function-lambda-optional-forms
+(test (function-lambda-optional-forms :compile-at :run-time)
   "Test FORM-TYPE on FUNCTION with LAMBDA expression with optional arguments"
 
   (is-form-type (function (string &optional number *) (values string &optional))
@@ -163,7 +163,7 @@
 	(the (values string &optional)
 	     (format nil "~a ~a is ~a years old~%" thing name age))))))
 
-(test function-lambda-optional-rest-forms
+(test (function-lambda-optional-rest-forms :compile-at :run-time)
   "Test FORM-TYPE on FUNCTION with LAMBDA expression with optional and rest arguments"
 
   (is-form-type (function (string &optional integer &rest string) string)
@@ -176,7 +176,7 @@
       (pprint y)
       (the string (concatenate 'string x y)))))
 
-(test function-lambda-key-forms
+(test (function-lambda-key-forms :compile-at :run-time)
   "Test FORM-TYPE on FUNCTION with LAMBDA expression with keyword arguments"
 
   (is-form-type (function (number &key (:y number)) number)
@@ -198,7 +198,7 @@
       (pprint x)
       x)))
 
-(test lambda-operator-forms
+(test (lambda-operator-forms :compile-at :run-time)
   "Test FORM-TYPE on forms with LAMBDA operators"
 
   (is-form-type integer
@@ -212,7 +212,7 @@
 
      var1 2)))
 
-(test lambda-operator-optional-forms
+(test (lambda-operator-optional-forms :compile-at :run-time)
   "Test FORM-TYPE on forms with LAMBDA operator with optional arguments"
 
   (is-form-type string
@@ -229,7 +229,7 @@
 
      "bob" 10 type)))
 
-(test lambda-operator-optional-rest-forms
+(test (lambda-operator-optional-rest-forms :compile-at :run-time)
   "Test FORM-TYPE on forms with LAMBDA operator with optional and rest arguments"
 
   (is-form-type string
@@ -244,7 +244,7 @@
 
      a1 a2 a3 a4 a5)))
 
-(test lambda-operator-key-forms
+(test (lambda-operator-key-forms :compile-at :run-time)
   "Test FORM-TYPE on forms with LAMBDA operator with keyword arguments"
 
   (is-form-type number
@@ -272,7 +272,7 @@
 
 ;;; MULTIPLE-VALUE-CALL Tests
 
-(test multiple-value-call-forms
+(test (multiple-value-call-forms :compile-at :run-time)
   "Test FORM-TYPE on MULTIPLE-VALUE-CALL forms"
 
   (flet ((mul (x y) (* x y))
@@ -303,7 +303,7 @@
 
 ;;; IF Form Tests
 
-(test if-forms
+(test (if-forms :compile-at :run-time)
   "Test FORM-TYPE on IF forms"
 
   (is-form-type (or (eql 100) string)
@@ -311,13 +311,13 @@
 	100
 	"hello world")))
 
-(test if-no-else-forms
+(test (if-no-else-forms :compile-at :run-time)
   "Test FORM-TYPE on IF forms with else branch"
 
   (is-form-type (or integer null)
     (if (plusp x) (the integer x))))
 
-(test if-variable-forms
+(test (if-variable-forms :compile-at :run-time)
   "Test FORM-TYPE on IF forms which return value of variable"
 
   (let ((varx 35))
@@ -332,7 +332,7 @@
       (is-form-type (or integer string)
 	(if (test x) varx greeting)))))
 
-(test if-function-forms
+(test (if-function-forms :compile-at :run-time)
   "Test FORM-TYPE on IF forms which return function call expression"
 
   (flet ((flip (x) (reverse x))
@@ -349,7 +349,7 @@
 
 ;;; LOAD-TIME-VALUE Form Tests
 
-(test load-time-value-forms
+(test (load-time-value-forms :compile-at :run-time)
   "Test FORM-TYPE on LOAD-TIME-VALUE forms"
 
   (is-form-type integer
@@ -358,7 +358,7 @@
   (is-form-type (eql 100)
     (load-time-value 100 t)))
 
-(test load-time-value-macro-forms
+(test (load-time-value-macro-forms :compile-at :run-time)
   "Test FORM-TYPE on LOAD-TIME-VALUE forms with macros"
 
   (macrolet ((pass-mac (form)
@@ -375,7 +375,7 @@
       (is-form-type string
 	(load-time-value local-string)))))
 
-(test load-time-value-variable-forms
+(test (load-time-value-variable-forms :compile-at :run-time)
   "Test FORM-TYPE on LOAD-TIME-VALUE forms which return value of variable"
 
   ;; Test that local variables do not affect the type of a
@@ -389,7 +389,7 @@
       (load-time-value local-var)
       :strict t)))
 
-(test load-time-value-function-forms
+(test (load-time-value-function-forms :compile-at :run-time)
   "Test FORM-TYPE on LOAD-TIME-VALUE forms which return function call expression"
 
   ;; Test that local functions do not affect the type of a
@@ -405,7 +405,7 @@
 
 ;;; PROGN Form Tests
 
-(test progn-forms
+(test (progn-forms :compile-at :run-time)
   "Test FORM-TYPE on PROGN forms"
 
   (is-form-type string
@@ -418,7 +418,7 @@
     (progn
       (pass-form (the number (+ a b))))))
 
-(test progn-nested-forms
+(test (progn-nested-forms :compile-at :run-time)
   "Test FORM-TYPE on nested PROGN forms"
 
   (is-form-type string
@@ -428,13 +428,13 @@
 	(pprint bye)
 	(the string (concatenate hello bye))))))
 
-(test progn-empty-forms
+(test (progn-empty-forms :compile-at :run-time)
   "Test FORM-TYPE on empty PROGN forms"
 
   (is-form-type (eql nil) (progn))
   (is-form-type (eql nil) (progn (progn))))
 
-(test progn-variable-forms
+(test (progn-variable-forms :compile-at :run-time)
   "Test FORM-TYPE on PROGN forms which return value of variable"
 
   (let ((greeting "hello world"))
@@ -451,7 +451,7 @@
       (is-form-type (eql 5)
 	(progn the-number-5)))))
 
-(test progn-function-forms
+(test (progn-function-forms :compile-at :run-time)
   "Test FORM-TYPES on PROGN forms which return function call expression"
 
   (labels ((inc (a) (1+ a))
@@ -469,7 +469,7 @@
 	(inc c)
 	(add a b)))))
 
-(test macro-progn-forms
+(test (macro-progn-forms :compile-at :run-time)
   "Test FORM-TYPE on macros which expand to PROGN forms"
 
   (macrolet ((local-pass (form)
@@ -498,7 +498,7 @@
 
 ;;; PROGV Form Tests
 
-(test progv-forms
+(test (progv-forms :compile-at :run-time)
   "Test FORM-TYPE on PROGV forms"
 
   (is-form-type string
@@ -511,7 +511,7 @@
     (progv nil nil
       (pass-form (the number (+ a b))))))
 
-(test progv-nested-forms
+(test (progv-nested-forms :compile-at :run-time)
   "Test FORM-TYPE on nested PROGV forms"
 
   (is-form-type string
@@ -521,13 +521,13 @@
 	(pprint bye)
 	(the string (concatenate hello bye))))))
 
-(test progv-empty-forms
+(test (progv-empty-forms :compile-at :run-time)
   "Test FORM-TYPE on empty PROGV forms"
 
   (is-form-type (eql nil) (progv '(x y z) '(1 2 3)))
   (is-form-type (eql nil) (progv nil nil (progv nil nil))))
 
-(test progv-variable-forms
+(test (progv-variable-forms :compile-at :run-time)
   "Test FORM-TYPE on PROGV forms which return value of variable"
 
   (let ((greeting "hello world"))
@@ -544,7 +544,7 @@
       (is-form-type (eql 5)
 	(progv nil nil the-number-5)))))
 
-(test progv-function-forms
+(test (progv-function-forms :compile-at :run-time)
   "Test FORM-TYPES on PROGV forms which return function call expression"
 
   (labels ((inc (a) (1+ a))
@@ -562,7 +562,7 @@
 	(inc c)
 	(add a b)))))
 
-(test macro-progv-forms
+(test (macro-progv-forms :compile-at :run-time)
   "Test FORM-TYPE on macros which expand to PROGV forms"
 
   (macrolet ((local-pass (form)
@@ -591,7 +591,7 @@
 
 ;;; MULTIPLE-VALUE-PROG1 Form Tests
 
-(test multiple-value-prog1-forms
+(test (multiple-value-prog1-forms :compile-at :run-time)
   "Test FORM-TYPE on MULTIPLE-VALUE-PROG1 forms"
 
   (is-form-type string
@@ -604,7 +604,7 @@
 	(pass-form (the number (+ a b)))
       "hello world")))
 
-(test multiple-value-prog1-nested-forms
+(test (multiple-value-prog1-nested-forms :compile-at :run-time)
   "Test FORM-TYPE on nested MULTIPLE-VALUE-PROG1 forms"
 
   (is-form-type string
@@ -619,7 +619,7 @@
   (is-form-type (eql nil) (multiple-value-prog1 nil))
   (is-form-type (eql nil) (multiple-value-prog1 (multiple-value-prog1 nil))))
 
-(test multiple-value-prog1-variable-forms
+(test (multiple-value-prog1-variable-forms :compile-at :run-time)
   "Test FORM-TYPE on MULTIPLE-VALUE-PROG1 forms which return value of variable"
 
   (let ((greeting "hello world"))
@@ -636,7 +636,7 @@
 	(multiple-value-prog1 the-number-5
 	  "A string")))))
 
-(test multiple-value-prog1-function-forms
+(test (multiple-value-prog1-function-forms :compile-at :run-time)
   "test FORM-TYPES on MULTIPLE-VALUE-PROG1 forms which return function call expression"
 
   (labels ((inc (a) (1+ a))
@@ -652,7 +652,7 @@
       (multiple-value-prog1 (add a b)
 	(inc c)))))
 
-(test macro-multiple-value-prog1-forms
+(test (macro-multiple-value-prog1-forms :compile-at :run-time)
   "Test FORM-TYPE on macros which expand to Multiple-Value-Prog1 forms"
 
   (macrolet ((local-pass (form)
@@ -681,7 +681,7 @@
 
 ;;; EVAL-WHEN Form Tests
 
-(test eval-when-forms
+(test (eval-when-forms :compile-at :run-time)
   "Test FORM-TYPE on EVAL-WHEN forms"
 
   (is-form-type string
@@ -694,14 +694,14 @@
     (eval-when (:execute)
       (pass-form (the number (+ a b))))))
 
-(test eval-when-no-execute-forms
+(test (eval-when-no-execute-forms :compile-at :run-time)
   "Test FORM-TYPE on EVAL-WHEN forms without :EXECUTE situation"
 
   (is-form-type null
     (eval-when (:compile-toplevel)
       "hello world")))
 
-(test eval-when-nested-forms
+(test (eval-when-nested-forms :compile-at :run-time)
   "Test FORM-TYPE on nested EVAL-WHEN forms"
 
   (is-form-type string
@@ -711,12 +711,12 @@
 	(pprint bye)
 	(the string (concatenate hello bye))))))
 
-(test eval-when-empty-forms
+(test (eval-when-empty-forms :compile-at :run-time)
   "Test FORM-TYPE on empty EVAL-WHEN forms"
 
   (is-form-type null (eval-when (:load-toplevel :execute :compile-toplevel))))
 
-(test eval-when-variable-forms
+(test (eval-when-variable-forms :compile-at :run-time)
   "Test FORM-TYPE on EVAL-WHEN forms which return value of variable"
 
   (let ((greeting "hello world"))
@@ -733,7 +733,7 @@
       (is-form-type (eql 5)
 	(eval-when (compile load eval) the-number-5)))))
 
-(test eval-when-function-forms
+(test (eval-when-function-forms :compile-at :run-time)
   "Test FORM-TYPES on EVAL-WHEN forms which return function call expression"
 
   (labels ((inc (a) (1+ a))
@@ -752,7 +752,7 @@
 	(inc c)
 	(add a b)))))
 
-(test macro-eval-when-forms
+(test (macro-eval-when-forms :compile-at :run-time)
   "Test FORM-TYPE on macros which expand to EVAL-WHEN forms"
 
   (macrolet ((group (&body forms)
@@ -780,7 +780,7 @@
 
 ;;; UNWIND-PROTECT Form Tests
 
-(test unwind-protect-forms
+(test (unwind-protect-forms :compile-at :run-time)
   "Test FORM-TYPE on UNWIND-PROTECT forms"
 
   (is-form-type string
@@ -791,13 +791,13 @@
   (is-form-type number
     (unwind-protect (pass-form (the number (+ a b))))))
 
-(test unwind-protect-no-cleanup-forms
+(test (unwind-protect-no-cleanup-forms :compile-at :run-time)
   "Test FORM-TYPE on UNWIND-PROTECT forms without cleanup forms"
 
   (is-form-type string
     (unwind-protect "hello world")))
 
-(test unwind-protect-nested-forms
+(test (unwind-protect-nested-forms :compile-at :run-time)
   "Test FORM-TYPE on nested UNWIND-PROTECT forms"
 
   (is-form-type string
@@ -807,7 +807,7 @@
 	   (pprint bye))
       (pprint hello))))
 
-(test unwind-protect-variable-forms
+(test (unwind-protect-variable-forms :compile-at :run-time)
   "Test FORM-TYPE on UNWIND-PROTECT forms which return value of variable"
 
   (let ((greeting "hello world"))
@@ -823,7 +823,7 @@
       (is-form-type (eql 5)
 	(unwind-protect the-number-5)))))
 
-(test unwind-protect-function-forms
+(test (unwind-protect-function-forms :compile-at :run-time)
   "Test FORM-TYPES on UNWIND-PROTECT forms which return function call expression"
 
   (labels ((inc (a) (1+ a))
@@ -843,7 +843,7 @@
 
 ;;; SETQ Form Tests
 
-(test setq-forms
+(test (setq-forms :compile-at :run-time)
   "Test FORM-TYPE on SETQ forms"
 
   (is-form-type (eql 1) (setq x 1))
@@ -858,7 +858,7 @@
 
   (is-form-type null (setq)))
 
-(test setq-malformed-forms
+(test (setq-malformed-forms :compile-at :run-time)
   "Test FORM-TYPE on malformed SETQ forms"
 
   (signals malformed-form-error
@@ -867,7 +867,7 @@
   (signals malformed-form-error
     (form-type '(setq a 1 2) nil)))
 
-(test setq-variable-forms
+(test (setq-variable-forms :compile-at :run-time)
   "Test FORM-TYPE on SETQ forms which return variable"
 
   (let ((x 1))
@@ -879,7 +879,7 @@
       (is-form-type integer (setq var x))
       (is-form-type string (setq str greeting)))))
 
-(test setq-function-forms
+(test (setq-function-forms :compile-at :run-time)
   "Test FORM-TYPE on SETQ forms which return function call expression"
 
   (flet ((join (str1 str2)
@@ -899,7 +899,7 @@
       (setq x (join "Hello" "World")
 	    y (symb 'hello 1)))))
 
-(test macro-setq-forms
+(test (macro-setq-forms :compile-at :run-time)
   "Test FORM-TYPE on macros which expand to SETQ forms"
 
   (macrolet ((my-setq (var form)
@@ -919,7 +919,7 @@
 
 ;;; LOCALLY Form Tests
 
-(test locally-forms
+(test (locally-forms :compile-at :run-time)
   "Test FORM-TYPE on simple (without type declarations) LOCALLY forms"
 
   (is-form-type string
@@ -931,7 +931,7 @@
   (is-form-type number
     (cl:locally (pass-form (the number (+ a b))))))
 
-(test locally-nested-forms
+(test (locally-nested-forms :compile-at :run-time)
   "Test FORM-TYPE on nested LOCALLY forms"
 
   (is-form-type string
@@ -941,13 +941,13 @@
 	(pprint bye)
 	(the string (concatenate hello bye))))))
 
-(test locally-empty-forms
+(test (locally-empty-forms :compile-at :run-time)
   "Test FORM-TYPE on empty LOCALLY forms"
 
   (is-form-type (eql nil) (cl:locally))
   (is-form-type null (cl:locally (declare (optimize debug)))))
 
-(test locally-variable-forms
+(test (locally-variable-forms :compile-at :run-time)
   "Test FORM-TYPE on LOCALLY forms with TYPE declarations, returning variables"
 
   (let ((x 0.5) (y 2) (z 3/4))
@@ -979,7 +979,7 @@
 	  (pprint greeting)
 	  greeting)))))
 
-(test locally-function-forms
+(test (locally-function-forms :compile-at :run-time)
   "Test FORM-TYPE on LOCALLY forms with FTYPE, returning function call expressions"
 
   (labels ((neg (a) (- a))
@@ -996,7 +996,7 @@
       (cl:locally (declare (ftype (function (number number) number) sub))
 	(sub (neg var) var)))))
 
-(test macro-locally-forms
+(test (macro-locally-forms :compile-at :run-time)
   "Test FORM-TYPE on macros which expand to LOCALLY forms"
 
   (macrolet ((local (form)
@@ -1016,7 +1016,7 @@
 
 ;;; Control Transfer Form Tests
 
-(test go-forms
+(test (go-forms :compile-at :run-time)
   "Test FORM-TYPE on GO forms"
 
   ;; GO forms do not return, instead they execute a jump
@@ -1031,7 +1031,7 @@
     (go 2)
     :strict t))
 
-(test return-from
+(test (return-from :compile-at :run-time)
   "Test FORM-TYPE on RETURN-FROM forms"
 
   ;; RETURN-FROM forms do not return, instead they execute a jump
@@ -1042,7 +1042,7 @@
   (is-form-type nil
     (return-from nil "abc")))
 
-(test throw-forms
+(test (throw-forms :compile-at :run-time)
   "Test FORM-TYPE on THROW forms"
 
   ;; THROW forms do not return, instead they execute a jump
@@ -1051,7 +1051,7 @@
     (throw 'tag-name 15)
     :strict t))
 
-(test tagbody-forms
+(test (tagbody-forms :compile-at :run-time)
   "Test FORM-TYPE on TAGBODY forms"
 
   ;; TAGBODY forms return NIL by definition
@@ -1072,7 +1072,7 @@
 
 ;;; Local Macro Definition Forms
 
-(test macrolet-forms
+(test (macrolet-forms :compile-at :run-time)
   "Test FORM-TYPE on MACROLET forms"
 
   (is-form-type string
@@ -1094,7 +1094,7 @@
       (format t "X: ~a~%Y: ~a~%" x y)
       (wrap-number (+ x y)))))
 
-(test macrolet-variable-forms
+(test (macrolet-variable-forms :compile-at :run-time)
   "Test FORM-TYPE on MACROLET forms which return variable"
 
   (let ((x 1050))
@@ -1116,7 +1116,7 @@
 	  (pprint "In MACROLET")
 	  (local-mac person-name))))))
 
-(test macrolet-function-forms
+(test (macrolet-function-forms :compile-at :run-time)
   "Test FORM-TYPE on MACROLET forms which return function"
 
   (flet ((func (x) (- x))
@@ -1132,7 +1132,7 @@
 	(pprint "In MACROLET")
 	(thing (func x))))))
 
-(test symbol-macrolet-forms
+(test (symbol-macrolet-forms :compile-at :run-time)
   "Test FORM-TYPE on SYMBOL-MACROLET forms"
 
   (is-form-type string
@@ -1146,7 +1146,7 @@
       (format t "Number: ~a~%" the-number-5)
       (pass-form the-number-5))))
 
-(test symbol-macrolet-variable-forms
+(test (symbol-macrolet-variable-forms :compile-at :run-time)
   "Test FORM-TYPE on SYMBOL-MACROLET forms which return variable"
 
   (let ((x 1050))
@@ -1169,7 +1169,7 @@
 	  (pprint "In SYMBOL-MACROLET")
 	  x)))))
 
-(test symbol-macrolet-function-forms
+(test (symbol-macrolet-function-forms :compile-at :run-time)
   "Test FORM-TYPE on SYMBOL-MACROLET forms which return function expression"
 
   (flet ((thing (seq) (reverse seq)))
@@ -1183,7 +1183,7 @@
 
 ;;; Local Variable Binding Form Types
 
-(test let-forms
+(test (let-forms :compile-at :run-time)
   "Test FORM-TYPE on LET forms"
 
   (is-form-type (eql 10)
@@ -1197,7 +1197,7 @@
       (format t "Hello: ~a~%" name)
       name)))
 
-(test let-variable-forms
+(test (let-variable-forms :compile-at :run-time)
   "Test FORM-TYPE on LET forms which return variable"
 
   (let ((x 1050))
@@ -1222,7 +1222,7 @@
 	  (format t "X: ~a" x)
 	  greeting)))))
 
-(test let-function-forms
+(test (let-function-forms :compile-at :run-time)
   "Test FORM-TYPE on LET forms which return function expression"
 
   (flet ((thing (seq) (reverse seq)))
@@ -1235,7 +1235,7 @@
 	(pprint y)
 	(thing (list x y))))))
 
-(test let*-forms
+(test (let*-forms :compile-at :run-time)
   "Test FORM-TYPE on LET* forms"
 
   (is-form-type (eql 10)
@@ -1249,7 +1249,7 @@
       (format t "Hello: ~a~%" name)
       name)))
 
-(test let*-variable-forms
+(test (let*-variable-forms :compile-at :run-time)
   "Test FORM-TYPE on LET* forms which return variable"
 
   (let* ((x 1050))
@@ -1274,7 +1274,7 @@
 	  (format t "X: ~a" x)
 	  greeting)))))
 
-(test let*-function-forms
+(test (let*-function-forms :compile-at :run-time)
   "Test FORM-TYPE on LET* forms which return function expression"
 
   (labels ((thing (seq) (reverse seq)))
@@ -1290,7 +1290,7 @@
 
 ;;; Local Function Binding Form Types
 
-(test flet-forms
+(test (flet-forms :compile-at :run-time)
   "Test FORM-TYPE on FLET forms"
 
   (is-form-type (eql 10)
@@ -1306,7 +1306,7 @@
       (format t "Hello: ~a~%" name)
       (flip name))))
 
-(test flet-variable-forms
+(test (flet-variable-forms :compile-at :run-time)
   "Test FORM-TYPE on FLET forms which return variable"
 
   (let ((var 101))
@@ -1326,7 +1326,7 @@
 	  (add x y)
 	  a-string)))))
 
-(test flet-function-forms
+(test (flet-function-forms :compile-at :run-time)
   "Test FORM-TYPE on FLET forms which return function expression"
 
   (flet ((thing (seq) (reverse seq)))
@@ -1361,7 +1361,7 @@
       (format t "Hello: ~a~%" name)
       (flip name))))
 
-(test labels-variable-forms
+(test (labels-variable-forms :compile-at :run-time)
   "Test FORM-TYPE on LABELS forms which return variable"
 
   (let ((var 101))
@@ -1381,7 +1381,7 @@
 	  (add x y)
 	  a-string)))))
 
-(test labels-function-forms
+(test (labels-function-forms :compile-at :run-time)
   "Test FORM-TYPE on LABELS forms which return function expression"
 
   (labels ((thing (seq) (reverse seq)))

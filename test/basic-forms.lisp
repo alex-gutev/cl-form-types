@@ -74,26 +74,26 @@
 
 ;;; Literal Constant Tests
 
-(test number-constant-type
+(test (number-constant-type :compile-at :run-time)
   "Test FORM-TYPE on numeric constants"
 
   (is-form-type (eql 1) 1)
   (is-form-type (eql 12) 12)
   (is-form-type (eql 2.3) 2.3))
 
-(test character-constant-type
+(test (character-constant-type :compile-at :run-time)
   "Test FORM-TYPE on character constants"
 
   (is-form-type (eql #\c) #\c)
   (is-form-type (eql #\x) #\x))
 
-(test string-constant-type
+(test (string-constant-type :compile-at :run-time)
   "Test FORM-TYPE on string constants"
 
   (is-form-type string "hello")
   (is-form-type string "bye"))
 
-(test array-constant-type
+(test (array-constant-type :compile-at :run-time)
   "Test FORM-TYPE on array constants"
 
   (is-form-type array #(1 2 3 4))
@@ -103,7 +103,7 @@
 
 ;;; Variable Form Tests
 
-(test constant-type
+(test (constant-type :compile-at :run-time)
   "Test FORM-TYPE on symbols which are defined as constant"
 
   (is-form-type (eql 10) +a-global-constant+)
@@ -112,7 +112,7 @@
   (is-form-type (eql nil) nil)
   (is-form-type (eql :a-keyword) :a-keyword))
 
-(test variable-type
+(test (variable-type :compile-at :run-time)
   "Test FORM-TYPE on symbols which are defined as variables"
 
   (let ((local-var #(1 2 3 4)))
@@ -123,7 +123,7 @@
     (is-form-type string *global-var*)
     (is-form-type t not-a-variable :strict t)))
 
-(test symbol-macro-type
+(test (symbol-macro-type :compile-at :run-time)
   "Test FORM-TYPE on symbol-macro forms"
 
   (symbol-macrolet ((number-10 +a-global-constant+)
@@ -136,7 +136,7 @@
 
 ;;; List Form Tests
 
-(test function-call-type
+(test (function-call-type :compile-at :run-time)
   "Test FORM-TYPE on function call expressions"
 
   (flet ((add (a b) (+ a b)))
@@ -147,7 +147,7 @@
 
     (is-form-type t (unknown-function a b c) :strict t)))
 
-(test macro-form-type
+(test (macro-form-type :compile-at :run-time)
   "Test FORM-TYPE on macro forms"
 
   (macrolet ((local-pass (form)
@@ -163,7 +163,7 @@
       (is-form-type string (local-pass "Hello"))
       (is-form-type number (local-pass (inc-twice (* inc-100 z)))))))
 
-(test compiler-macro-expansion
+(test (compiler-macro-expansion :compile-at :run-time)
   "Test FORM-TYPE with expansion of compiler-macros"
 
   (is-form-type (eql x)

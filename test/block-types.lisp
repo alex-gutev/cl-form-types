@@ -53,7 +53,7 @@
 
 ;;; Simple Tests
 
-(test simple-block-forms
+(test (simple-block-forms :compile-at :run-time)
   "Test FORM-TYPE on BLOCK forms without RETURN-FROM"
 
   (is-form-type (eql 10)
@@ -65,7 +65,7 @@
 
     :test type=))
 
-(test with-return-from-other-block
+(test (with-return-from-other-block :compile-at :run-time)
   "Test FORM-TYPE on BLOCK with RETURN-FROM other block"
 
   (is-form-type (eql 2)
@@ -83,7 +83,7 @@
 
 ;;; With RETURN-FROM
 
-(test with-return-from
+(test (with-return-from :compile-at :run-time)
   "Test FORM-TYPE on BLOCK with RETURN-FROM same block"
 
   (is-form-type (or (eql ret1) (eql ret2))
@@ -98,7 +98,7 @@
 
     :test type=))
 
-(test with-return-from-nil
+(test (with-return-from-nil :compile-at :run-time)
   "Test FORM-TYPE on BLOCK with NIL name with RETURN-FROM"
 
   (is-form-type (or (eql ret1) (eql ret2))
@@ -113,7 +113,7 @@
 
     :test type=))
 
-(test with-return-from-nested
+(test (with-return-from-nested :compile-at :run-time)
   "Test FORM-TYPE on BLOCK with RETURN-FROM in nested block"
 
   (is-form-type (or (eql x) (eql z))
@@ -129,7 +129,7 @@
 
     :test type=))
 
-(test with-return-from-nested-same-name
+(test (with-return-from-nested-same-name :compile-at :run-time)
   "Test FORM-TYPE on BLOCK with RETURN-FROM in nested block with same name"
 
   (is-form-type (eql r3)
@@ -145,7 +145,7 @@
 
     :test type=))
 
-(test (with-nested-return-from :depends-on with-if)
+(test (with-nested-return-from :compile-at :run-time :depends-on with-if)
   "Test FORM-TYPE on BLOCK with RETURN-FROM nested in RETURN-FROM"
 
   (is-form-type (member t1 t2 t3)
@@ -162,7 +162,7 @@
 
 ;;; Test with FLET forms
 
-(test with-flet
+(test (with-flet :compile-at :run-time)
   "Test FORM-TYPE on BLOCK with FLET form"
 
   (is-form-type (or (eql from-block) (eql from-g))
@@ -182,7 +182,7 @@
 
     :test type=))
 
-(test (with-nested-flet :depends-on (and with-flet with-if))
+(test (with-nested-flet :compile-at :run-time :depends-on (and with-flet with-if))
   "Test FORM-TYPE on BLOCK with nested FLET form"
 
   (is-form-type (or (eql from-block) (eql from-g) (eql from-g1))
@@ -211,7 +211,7 @@
 
     :test type=))
 
-(test (with-flet-return-from-in-lambda-list :depends-on with-flet)
+(test (with-flet-return-from-in-lambda-list :compile-at :run-time :depends-on with-flet)
   "Test FORM-TYPE on BLOCK with FLET form with RETURN-FROM in lambda list"
 
   (is-form-type (or (eql l1) (eql l2) (eql l3) (eql l4) (eql l5) (eql default))
@@ -243,7 +243,7 @@
 
     :test type=))
 
-(test (with-flet-nested-block :depends-on with-flet)
+(test (with-flet-nested-block :compile-at :run-time :depends-on with-flet)
   "Test FORM-TYPE on BLOCK with FLET and BLOCK nested in it"
 
   (is-form-type (or (eql from-f1) (eql default))
@@ -267,7 +267,7 @@
 
 ;;; Test with LABELS forms
 
-(test with-labels
+(test (with-labels :compile-at :run-time)
   "Test FORM-TYPE on BLOCK with LABELS form"
 
   (is-form-type (or (eql from-block) (eql from-f) (eql from-g))
@@ -290,7 +290,7 @@
 
     :test type=))
 
-(test (with-nested-labels :depends-on (and with-labels with-if))
+(test (with-nested-labels :compile-at :run-time :depends-on (and with-labels with-if))
   "Test FORM-TYPE on BLOCK with nested LABELS forms"
 
   (is-form-type (or (eql from-block) (eql from-f) (eql from-g) (eql from-f1) (eql from-g1))
@@ -325,7 +325,7 @@
 
     :test type=))
 
-(test (with-labels-return-from-in-lambda-list :depends-on with-labels)
+(test (with-labels-return-from-in-lambda-list :compile-at :run-time :depends-on with-labels)
   "Test FORM-TYPE on BLOCK with LABELS form with RETURN-FROM in lambda list"
 
   (is-form-type (or (eql l1) (eql l2) (eql l3) (eql l4) (eql l5) (eql default))
@@ -357,7 +357,7 @@
 
     :test type=))
 
-(test (with-labels-nested-block :depends-on with-labels)
+(test (with-labels-nested-block :compile-at :run-time :depends-on with-labels)
   "Test FORM-TYPE on BLOCK with LABELS and BLOCK nested in it"
 
   (is-form-type (or (eql from-f1) (eql default))
@@ -381,7 +381,7 @@
 
 ;;; Test with FUNCTION forms
 
-(test (with-function :depends-on with-flet)
+(test (with-function :compile-at :run-time :depends-on with-flet)
   "Test FORM-TYPE on BLOCK with FUNCTION form"
 
   (is-form-type (member v1 v2)
@@ -396,7 +396,7 @@
 
     :test type=))
 
-(test with-function-lambda
+(test (with-function-lambda :compile-at :run-time)
   "Test FORM-TYPE on BLOCK with FUNCTION form with LAMBDA Expression"
 
   (is-form-type (member v1 v2 v3 v4)
@@ -411,7 +411,7 @@
 
     :test type=))
 
-(test with-lambda-operator
+(test (with-lambda-operator :compile-at :run-time)
   "Test FORM-TYPE on BLOCK with expression with LAMBDA operator"
 
   (is-form-type (member v1 v2 v3 v4)
@@ -427,7 +427,7 @@
 
 ;;; Test with LET/LET* forms
 
-(test (with-let :depends-on with-if)
+(test (with-let :compile-at :run-time :depends-on with-if)
   "Test FORM-TYPE on BLOCK with LET forms"
 
   (is-form-type (or (eql in-init) (eql in-let) (eql in-last))
@@ -444,7 +444,7 @@
 
     :test type=))
 
-(test (with-let* :depends-on with-if)
+(test (with-let* :compile-at :run-time :depends-on with-if)
   "Test FORM-TYPE on BLOCK with LET* forms"
 
   (is-form-type (or (eql in-init) (eql in-let) (eql in-last))
@@ -461,7 +461,7 @@
 
     :test type=))
 
-(test (with-locally :depends-on with-if)
+(test (with-locally :compile-at :run-time :depends-on with-if)
   "Test FORM-TYPE on BLOCK with LOCALLY forms"
 
   (is-form-type (or (eql in-locally) (eql default-value))
@@ -479,7 +479,7 @@
 
 ;;; Test unevaluated and non-processed forms
 
-(test with-go
+(test (with-go :compile-at :run-time)
   "Test FORM-TYPE on BLOCK with GO forms"
 
   (is-form-type (eql value)
@@ -489,7 +489,7 @@
 
     :test type=))
 
-(test with-load-time-value
+(test (with-load-time-value :compile-at :run-time)
   "Test FORM-TYPE on BLOCK with LOAD-TIME-VALUE forms"
 
   (is-form-type (eql 2)
@@ -499,7 +499,7 @@
 
     :test type=))
 
-(test with-quote
+(test (with-quote :compile-at :run-time)
   "Test FORM-TYPE on BLOCK with QUOTE forms"
 
   (is-form-type (eql 2)
@@ -512,7 +512,7 @@
 
 ;;; Test MACROLET and SYMBOL-MACROLET forms
 
-(test with-macrolet
+(test (with-macrolet :compile-at :run-time)
   "Test FORM-TYPE on BLOCK with MACROLET forms"
 
   (macrolet ((local-pass (form)
@@ -530,7 +530,7 @@
 
       :test type=)))
 
-(test with-symbol-macrolet
+(test (with-symbol-macrolet :compile-at :run-time)
   "Test FORM-TYPE on BLOCK with SYMBOL-MACROLET forms"
 
   (macrolet ((local-pass (form)
@@ -549,7 +549,7 @@
 
 ;;; With other special forms
 
-(test with-catch
+(test (with-catch :compile-at :run-time)
   "Test FORM-TYPE on BLOCK with CATCH forms"
 
   (is-form-type (member a b)
@@ -561,7 +561,7 @@
 
     :test type=))
 
-(test with-eval-when
+(test (with-eval-when :compile-at :run-time)
   "Test FORM-TYPE on BLOCK with EVAL-WHEN forms"
 
   (is-form-type (member 1 2)
@@ -575,7 +575,7 @@
 
     :test type=))
 
-(test with-if
+(test (with-if :compile-at :run-time)
   "Test FORM-TYPE on BLOCK with IF forms"
 
   (is-form-type (member cond true false)
@@ -586,7 +586,7 @@
 
     :test type=))
 
-(test with-multiple-value-call
+(test (with-multiple-value-call :compile-at :run-time)
   "Test FORM-TYPE on BLOCK with MULTIPLE-VALUE-CALL forms"
 
   (is-form-type (member 1 2 3)
@@ -597,7 +597,7 @@
 
     :test type=))
 
-(test with-multiple-value-prog1
+(test (with-multiple-value-prog1 :compile-at :run-time)
   "Test FORM-TYPE on BLOCK with MULTIPLE-VALUE-PROG1 forms"
 
   (is-form-type (member 1 2 3)
@@ -609,7 +609,7 @@
 
     :test type=))
 
-(test with-progn
+(test (with-progn :compile-at :run-time)
   "Test FORM-TYPE on BLOCK with PROGN forms"
 
   (is-form-type (member a b c)
@@ -622,7 +622,7 @@
 
     :test type=))
 
-(test with-progv
+(test (with-progv :compile-at :run-time)
   "Test FORM-TYPE on BLOCK with PROGV forms"
 
   (is-form-type (member a b c)
@@ -634,7 +634,7 @@
 
     :test type=))
 
-(test with-setq
+(test (with-setq :compile-at :run-time)
   "Test FORM-TYPE on BLOCK with SETQ forms"
 
   (is-form-type (member 2 3)
@@ -646,7 +646,7 @@
 
     :test type=))
 
-(test with-malformed-setq
+(test (with-malformed-setq :compile-at :run-time)
   "Test FORM-TYPE on BLOCK with malformed SETQ forms"
 
   (signals malformed-form-error
@@ -684,7 +684,7 @@
 
     :test type=))
 
-(test with-the
+(test (with-the :compile-at :run-time)
   "Test FORM-TYPE on BLOCK with THE forms"
 
   (is-form-type (member a b)
@@ -694,7 +694,7 @@
 
    :test type=))
 
-(test with-throw
+(test (with-throw :compile-at :run-time)
   "Test FORM-TYPE on BLOCK with THE forms"
 
   (is-form-type (member a b)
@@ -704,7 +704,7 @@
 
    :test type=))
 
-(test with-unwind-protect
+(test (with-unwind-protect :compile-at :run-time)
   "Test FORM-TYPE on BLOCK with UNWIND-PROTECT forms"
 
   (is-form-type (member a b c)
