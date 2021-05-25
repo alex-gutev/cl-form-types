@@ -35,7 +35,8 @@
 		:components
 		((:file "package")
 		 (:file "form-types")
-		 (:file "block-types"))))
+		 (:file "block-types")
+		 (:file "cl-functions"))))
 
   :depends-on (#:cl-environments
 	       #:agutil
