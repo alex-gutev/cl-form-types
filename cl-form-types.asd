@@ -62,7 +62,8 @@
 		 (:file "values-types")
 		 (:file "basic-forms")
 		 (:file "special-forms")
-		 (:file "block-types"))))
+		 (:file "block-types")
+		 (:file "custom-types"))))
 
   :perform (test-op (o s)
 		    (uiop:symbol-call :cl-form-types/test :test-cl-form-types)))
