@@ -574,11 +574,7 @@
 
     OPERANDS is the for argument list.
 
-    ENV is the environment in which the form is found.")
-
-  (:method (operator operands env)
-    (declare (ignore operator operands env))
-    t))
+    ENV is the environment in which the form is found."))
 
 (defmethod special-form-type :around (operator operands env)
   (with-default-type-restart
@@ -606,14 +602,17 @@
 
       (declare (ignore local))
 
-      (case type
-	(:function
-	 (aif (expand-compiler-macros operator arguments env)
-	      (form-type% it env)
-	      (get-ftype decl)))
+      (match (custom-form-type operator arguments env)
+	(t
+	 (case type
+	   (:function
+	    (aif (expand-compiler-macros operator arguments env)
+		 (form-type% it env)
+		 (get-ftype decl)))
 
-	(otherwise
-	 (custom-form-type operator arguments env))))))
+	   (otherwise t)))
+
+	(type type)))))
 
 ;;;; QUOTE and FUNCTION
 
