@@ -565,6 +565,7 @@
    VALUE is the constant value."
 
   (cond
+    #+sbcl
     ((and *handle-sb-lvars* (sb-c::lvar-p value))
      (-> value
          sb-c::lvar-%derived-type
