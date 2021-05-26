@@ -578,13 +578,6 @@
      (typecase value
        ((or number character symbol) `(eql ,value))
 
-       #+sbcl
-       (sb-c::lvar
-        (if *handle-sb-lvars*
-
-
-            (type-of value)))
-
        (otherwise
 	(type-of value))))))
 
