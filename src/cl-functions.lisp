@@ -139,13 +139,13 @@
    t))
 
 (defmethod custom-form-type ((first (eql 'aref)) form env)
-  (let ((element-type (introspect-environment:typexpand (form-type (second form) env))))
+  (let ((element-type (introspect-environment:typexpand (form-type form env))))
     (if (listp element-type)
         (values (second element-type) t)
         (values t nil))))
 
 (defmethod custom-form-type ((first (eql 'row-major-aref)) form env)
-  (let ((element-type (introspect-environment:typexpand (form-type (second form) env))))
+  (let ((element-type (introspect-environment:typexpand (form-type form env))))
     (if (listp element-type)
         (values (second element-type) t)
         (values t nil))))
