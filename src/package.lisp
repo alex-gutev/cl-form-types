@@ -36,6 +36,7 @@
 	   :nth-form-type
 	   :nth-value-type
 	   :custom-form-type
+           :*handle-sb-lvars*
 
 	   :malformed-form-error
 	   :unknown-special-operator

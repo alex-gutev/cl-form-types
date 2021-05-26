@@ -84,6 +84,15 @@
   "Flag for whether compiler-macros should be expanded prior to
    determining form types.")
 
+(defvar *handle-sb-lvars* nil
+  "Flag for whether SBCL `SB-C::LVAR' structures should be recognized.
+
+   If true an the type of an LVAR is returned if encountered as a
+   constant.
+
+   If NIL LVARS as treated as literal constant and an EQL type or LVAR
+   is returned, depending on the value of*CONSTANT-EQL-TYPES*.")
+
 (defun form-types (forms env &key ((:constant-eql-types *constant-eql-types*)) ((:expand-compiler-macros *expand-compiler-macros*)))
   "Determines the type of each form in FORMS.
 
@@ -555,13 +564,28 @@
 
    VALUE is the constant value."
 
-  (if *constant-eql-types*
-      `(eql ,value)
+  (cond
+    ((and *handle-sb-lvars* (sb-c::lvar-p value))
+     (-> value
+         sb-c::lvar-%derived-type
+         sb-kernel::type-specifier))
 
-      (typecase value
-	((or number character symbol) `(eql ,value))
-	(otherwise
-	 (type-of value)))))
+    (*constant-eql-types*
+     `(eql ,value))
+
+    (t
+     (typecase value
+       ((or number character symbol) `(eql ,value))
+
+       #+sbcl
+       (sb-c::lvar
+        (if *handle-sb-lvars*
+
+
+            (type-of value)))
+
+       (otherwise
+	(type-of value))))))
 
 
 ;;; Special Form Types
