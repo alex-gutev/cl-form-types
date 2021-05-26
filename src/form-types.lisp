@@ -87,7 +87,7 @@
 (defvar *handle-sb-lvars* nil
   "Flag for whether SBCL `SB-C::LVAR' structures should be recognized.
 
-   If true an the type of an LVAR is returned if encountered as a
+   If true the type of an LVAR is returned if encountered as a
    constant.
 
    If NIL LVARS as treated as literal constant and an EQL type or LVAR

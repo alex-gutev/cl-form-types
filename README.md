@@ -110,7 +110,7 @@ be extended with methods to add custom type deduction logic for
 function calls and non-standard special forms.
 
 * `OPERATOR` - Expression operator
-* `ARGUMENTS` - List of argument forms
+* `ARGUMENTS` - List containing the expression's argument forms
 * `ENV` - Environment in which the form is found.
 
 **NOTE:** The environment argument is not necessarily a native
@@ -122,6 +122,22 @@ the `CL-ENVIRONMENTS-CL` package should be used, see
 
 Returns the value type of the form `(OPERATOR . ARGUMENTS)`, or `T` if
 it's type could not be determined.
+
+### \*HANDLE-SB-LVARS\*
+
+Variable: `*HANDLE-SB-LVARS*`
+
+Flag for whether SBCL's `SB-C::LVAR` structures should be recognized.
+
+If true and an `SB-C::LVAR` structure is encountered as a constant,
+the type returned is the _derived type_ of the `LVAR`.
+
+If NIL `SB-C::LVAR`'s are treated as literal constant objects, and the
+type returned is either an `EQL` type specifier or `LVAR` depending on
+the value of the `CONSTANT-EQL-TYPES` argument to `FORM-TYPE` /
+`NTH-FORM-TYPE`.
+
+**NOTE:** The value of this variable only has an effect on SBCL.
 
 ### MALFORMED-FORM-ERROR
 
