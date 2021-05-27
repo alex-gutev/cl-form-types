@@ -1,7 +1,7 @@
 # CL-FORM-TYPES
 
-This library provides functions for determine the value types of
-Common Lisp forms, based on type information stored in the
+This library provides functions for determining the value types of
+Common Lisp forms, based on type information contained in the
 environment.
 
 Currently the types of the following forms can be determined:
@@ -19,9 +19,9 @@ forms, except `CATCH`, are supported.
 This library depends on
 [cl-environments](https://alex-gutev.github.io/cl-environments/) in
 order to extract information from the environment using the CLTL2
-API. Check the library's documentation for details on how to use so
-that the type information is available across all implementations, and
-details on its limitations.
+API. Check the library's documentation for details on how to ensure
+that information contained in the environment can be retrieved, across
+all implementations.
 
 ## Package CL-FORM-TYPES
 
@@ -62,8 +62,7 @@ Determine the type of the nth return value of a form.
   FORM and its subforms before determining form types.
 
 Returns the type specifier of the `N`th value returned by `FORM`. If
-`FORM` only returns a single value or returns less values than `N`,
-`NIL` is returned.
+`FORM` returns less values than `N`, `NIL` is returned.
 
 ### NTH-VALUE-TYPE
 
@@ -73,12 +72,11 @@ Extract the type of the nth return value from a `VALUES` type
 specifier.
 
 * `TYPE` - A type specifier. If not a `VALUES` type specifier it is
-  treated as a `VALUES` type specifier of a single return value.
+  treated as a `VALUES` type specifier of a single value.
 * `N` - Index of the value of which to retrieve the type.
 
-Returns the nth value type or NIL if there is no information about the
-nth return value, that is the actual number of values in the type
-specifier is less than `N`.
+Returns the nth value type or `NIL` if `N` is greater than the number
+values in the type specifier.
 
 ### FORM-TYPES
 
@@ -114,8 +112,8 @@ function calls and non-standard special forms.
 * `ENV` - Environment in which the form is found.
 
 **NOTE:** The environment argument is not necessarily a native
-environment object, but may be an augmented environment object,
-therefore it should not be passed directly to built in functions which
+environment object, but may be an augmented environment object.
+Therefore it should not be passed directly to built in functions which
 expect an environment object but rather the equivalent functions from
 the `CL-ENVIRONMENTS-CL` package should be used, see
 <https://alex-gutev.github.io/cl-environments/#wrapper_functions>.
