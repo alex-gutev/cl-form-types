@@ -858,81 +858,7 @@
 	(lastcar body)
 	(augment-environment
 	 env
-	 :variable (extract-declared-vars declarations)
-	 :function (extract-declared-funcs declarations)
 	 :declare (mappend #'cdr declarations)))))))
-
-#-sbcl
-(defun extract-declared-vars (declarations)
-  (declare (ignore declarations))
-  nil)
-
-#-sbcl
-(defun extract-declared-funcs (declarations)
-  (declare (ignore declarations))
-  nil)
-
-;;; SBCL does not record declarations added to the environment, by
-;;; AUGMENT-ENVIRONMENT, if the corresponding variable/function is not
-;;; added as well, even if it is already present in the environment.
-
-#+sbcl
-(defun extract-declared-vars (declarations)
-  "Extract variable names from TYPE declaration expressions.
-
-   DECLARATIONS is a list of DECLARE expressions, with `DECLARE` in
-   the CAR of each element of DECLARATIONS."
-
-  (labels ((extract-vars (decl-expression)
-	     "Extract variable names from DECLARE TYPE expressions."
-
-	     (match-form decl-expression
-	       ((list* _ (and (type proper-list) decls))
-		(mappend #'extract-var decls))))
-
-	   (extract-var (decl)
-	     "Extract variable names from TYPE declarations."
-
-	     (match decl
-	       ((list* 'type _
-		       (guard vars
-			      (and (proper-list-p vars)
-				   (every #'symbolp vars))))
-		vars))))
-
-    (mappend #'extract-vars declarations)))
-
-#+sbcl
-(defun extract-declared-funcs (declarations)
-  "Extract function names from FTYPE declaration expressions.
-
-   DECLARATIONS is a list of DECLARE expressions, with `DECLARE` in
-   the CAR of each element of DECLARATIONS."
-
-  (labels ((extract-funcs (decl-expression)
-	     "Extract function names from DECLARE FTYPE expressions."
-
-	     (match-form decl-expression
-	       ((list* _ (and (type proper-list) decls))
-		(mappend #'extract-func decls))))
-
-	   (function-name-p (name)
-	     (match name
-	       ((or (type symbol)
-		    (list 'cl:setf (type symbol)))
-		t)))
-
-	   (extract-func (decl)
-	     "Extract function names from FTYPE declarations."
-
-	     (match decl
-	       ((list* 'ftype _
-		       (guard fns
-			      (and (proper-list-p fns)
-				   (every #'function-name-p fns))))
-		fns))))
-
-    (mappend #'extract-funcs declarations)))
 
 
 ;;; Control Flow Context
@@ -981,8 +907,6 @@
 	  (lastcar body)
 	  (augment-environment
 	   env
-	   :variable (extract-declared-vars declarations)
-	   :function (extract-declared-funcs declarations)
 	   :macro (mapcar #'make-macro macros)
 	   :declare (mappend #'cdr declarations))))))))
 
@@ -998,8 +922,6 @@
 	(lastcar body)
 	(augment-environment
 	 env
-	 :variable (extract-declared-vars declarations)
-	 :function (extract-declared-funcs declarations)
 	 :symbol-macro symbol-macros
 	 :declare (mappend #'cdr declarations)))))))
 
@@ -1040,11 +962,7 @@
 
 	  (augment-environment
 	   env
-	   :variable (-> (mappend #'extract-var bindings)
-			 (union (extract-declared-vars declarations)))
-
-	   :function (extract-declared-funcs declarations)
-
+	   :variable (mappend #'extract-var bindings)
 	   :declare (mappend #'cdr declarations))))))))
 
 
@@ -1082,9 +1000,5 @@
 
 	  (augment-environment
 	   env
-	   :variable (extract-declared-vars declarations)
-
-	   :function (-> (mappend #'extract-function functions)
-			 (union (extract-declared-funcs declarations)))
-
+	   :function (mappend #'extract-function functions)
 	   :declare (mappend #'cdr declarations))))))))
