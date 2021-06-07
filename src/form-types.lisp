@@ -567,9 +567,12 @@
   (cond
     #+sbcl
     ((and *handle-sb-lvars* (sb-c::lvar-p value))
-     (-> value
-         sb-c::lvar-%derived-type
-         sb-kernel::type-specifier))
+     (let ((type
+            (-> value
+                sb-c::lvar-%derived-type
+                sb-kernel::type-specifier)))
+
+       (if (eq type '*) t type)))
 
     (*constant-eql-types*
      `(eql ,value))
