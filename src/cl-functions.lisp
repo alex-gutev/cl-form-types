@@ -150,8 +150,8 @@
         (values (second element-type) t)
         (values t nil))))
 
-(defmethod custom-form-type ((first (eql 'values)) form env)
-  (values `(values ,@(loop :for form :in (rest form)
+(defmethod custom-form-type ((first (eql 'values)) args env)
+  (values `(values ,@(loop :for form :in args
                            :collect (form-type form env)))
           t))
 
