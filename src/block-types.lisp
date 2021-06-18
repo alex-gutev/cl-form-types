@@ -260,8 +260,7 @@
 	      (ftypes (mapcar (rcurry #'walk-local-fn env nil) functions))
 	      (*local-fns* (append ftypes *local-fns*)))
 
-	 (-<> (augment-environment env :function names)
-	      (walk-body body <> types)))))))
+	 (walk-body body env types :function names))))))
 
 (defmethod walk-list-form ((operator (eql 'cl:labels)) operands env types)
   (flet ((extract-function (binding)
@@ -280,7 +279,7 @@
 	      (ftypes (local-function-types names functions env))
 	      (*local-fns* (append ftypes *local-fns*)))
 
-	 (walk-body body env types))))))
+	 (walk-body body env types :function names))))))
 
 (defun local-function-types (names functions env)
   "Determine the types of the RETURN-FROM forms in lexical functions.
@@ -378,10 +377,10 @@
     ((list* (and (type proper-list) lambda-list)
 	    (and (type proper-list) body))
 
-     (multiple-value-bind (types env)
+     (multiple-value-bind (types variables)
 	 (walk-lambda-list lambda-list env types)
 
-       (walk-body body env types :documentation t)))))
+       (walk-body body env types :variable variables :documentation t)))))
 
 (defun walk-lambda-list (list env types)
   "Extract RETURN-FROM value types from an ordinary lambda list.
@@ -395,10 +394,9 @@
 
    Returns two values:
 
-     1. List of type specifiers.
+     1. List of type specifiers
 
-     2. The environment of the function body created by augmenting ENV
-         with the argument variables."
+     2. List of variable names"
 
   (labels ((walk-args (args env types)
 	     (if args
@@ -433,14 +431,18 @@
 	(multiple-value-bind (types env)
 	    (walk-args key (augment-environment env :variable (ensure-list rest)) types)
 
-	  (multiple-value-bind (types env)
-	      (walk-args aux (augment-environment env) types)
-
+	  (let ((types (walk-args aux env types)))
 	    (values
 	     types
-	     env)))))))
 
-(defun walk-body (body env types &key (documentation nil))
+	     (append
+	      required
+	      (mapcar #'ensure-car optional)
+	      (ensure-list rest)
+	      (mapcar #'cadar key)
+	      (mapcar #'ensure-car aux)))))))))
+
+(defun walk-body (body env types &key variable function symbol-macro macro documentation)
   "Extract RETURN-FROM value types from the body of an environment-modifying form.
 
    BODY is the list of containing form's body. The first element of
@@ -455,12 +457,21 @@
    DOCUMENTATION is a flag for whether BODY may contain documentation
    strings (true).
 
+   The remaining keyword arguments are additional arguments to pass to
+   AUGMENT-ENVIRONMENT on environment ENV.
+
    Returns a list of type specifiers."
 
   (multiple-value-bind (forms decl)
       (parse-body body :documentation documentation)
 
-    (let ((env (augment-environment env :declare (mappend #'cdr decl))))
+    (let ((env (augment-environment
+		env
+		:variable variable
+		:function function
+		:symbol-macro symbol-macro
+		:macro macro
+		:declare (mappend #'cdr decl))))
       (walk-forms forms env types))))
 
 
@@ -485,12 +496,11 @@
      ((list* (and (type proper-list) bindings)
 	     body)
 
-      (->> (walk-forms (mappend #'extract-init bindings) env types)
-	   (walk-body
-	    body
-	    (augment-environment
-	     env
-	     :variable (mapcar #'extract-var bindings))))))))
+      (walk-body
+       body
+       env
+       (walk-forms (mappend #'extract-init bindings) env types)
+       :variable (mapcar #'extract-var bindings))))))
 
 (defmethod walk-list-form ((operator (eql 'cl:let*)) operands env types)
   (labels ((walk-bindings (bindings env &optional types)
@@ -501,7 +511,7 @@
 			 rest
 			 (augment-environment env :variable (list (extract-var binding))))))
 
-		 (values types env)))
+		 types))
 
 	   (walk-binding (binding env types)
 	     (match binding
@@ -521,10 +531,9 @@
       ((list* (and (type proper-list) bindings)
 	      body)
 
-       (multiple-value-bind (types env)
-	   (walk-bindings bindings env)
 
-	 (walk-body body env types))))))
+       (walk-body body env (walk-bindings bindings env)
+		  :variable (mapcar #'extract-var bindings))))))
 
 
 ;;; Lexcial Macro Forms
@@ -542,13 +551,13 @@
       ((list* (and (type proper-list) macros)
 	      (and (type proper-list) body))
 
-       (-<> (augment-environment env :macro (mapcar #'make-macro macros))
-	    (walk-body body <> types))))))
+       (walk-body body env types
+		  :macro (mapcar #'make-macro macros))))))
 
 (defmethod walk-list-form ((operator (eql 'cl:symbol-macrolet)) operands env types)
   (match-form operands
     ((list* (and (type proper-list) symbol-macros)
 	    (and (type proper-list) body))
 
-     (-<> (augment-environment env :symbol-macro symbol-macros)
-	  (walk-body body <> types)))))
+     (walk-body body env types
+		:symbol-macro symbol-macros))))
