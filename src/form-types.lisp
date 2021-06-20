@@ -598,6 +598,7 @@
     ENV is the environment in which the form is found."))
 
 (defmethod special-form-type :around (operator operands env)
+  (declare (ignore operator operands env))
   (with-default-type-restart
     (call-next-method)))
 
@@ -638,6 +639,7 @@
 ;;;; QUOTE and FUNCTION
 
 (defmethod special-form-type ((operator (eql 'cl:quote)) operands env)
+  (declare (ignore env))
   (match-form operands
     ((list thing)
      (constant-type thing))))

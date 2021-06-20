@@ -238,8 +238,6 @@
 ;;; Other special forms
 
 (defmethod walk-list-form ((operator (eql 'cl:load-time-value)) operands env)
-  (declare (ignore env))
-
   (destructuring-bind (form &optional read-only-p) operands
     (with-result (result (walk-form% form env))
       `(cl:load-time-value ,result ,read-only-p))))

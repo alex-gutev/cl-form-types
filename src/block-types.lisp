@@ -101,6 +101,8 @@
     appearing within a BLOCK form."))
 
 (defmethod block-type-walk-list-form (operator operands env)
+  (declare (ignore env))
+
   (when (symbolp operator)
     (when (and (special-operator-p operator)
 	       (not (member operator +cl-special-forms+)))
@@ -148,6 +150,8 @@
   (values nil t))
 
 (defmethod block-type-walk-list-form ((operator (eql 'cl:function)) operands env)
+  (declare (ignore env))
+
   (match operands
     ((list (and (or (type symbol) (list 'cl:setf _)) name))
      (appendf *block-types* (cdr (assoc name *local-fns*)))))
