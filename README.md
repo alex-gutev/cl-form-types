@@ -177,6 +177,61 @@ Invoke the `RETURN-DEFAULT-TYPE` restart.
 This restart, for a `MALFORMED-FORM-ERROR` condition, returns the type
 `TYPE` as the form type for the malformed form.
 
+## Code Walker
+
+The package `CL-FORM-TYPES.WALKER` exposes the (mostly) portable
+code-walker used by the `FORM-TYPE` functions.
+
+### WALK-FORM
+
+Function: `WALK-FORM FN FORM ENV &KEY (RESULT-TYPE 'LIST)`
+
+Apply a function on a form and each of its subforms, and return the
+resulting form.
+
+* `FN`
+
+  Function of two arguments to apply on each subform of `FORM`.
+
+  The function is passed to arguments: the form and the environment in
+  which it occurs.
+
+  It should return the following values:
+
+  1. The new form. The subforms of this form are walked and it is
+     subtituted in place of the old form, in the result returned by
+     `WALK-FORM`.
+
+  2. A Boolean flag. If true the subforms of the form returned in (1)
+     are not walked further, and the form is substituted as it is in
+     the result. Otherwise the subforms are walked.
+
+* `FORM`
+
+  The form to walk. `FN` is first applied on `FORM` itself,
+  then on its subforms.
+
+* `ENV`
+
+   The environment in which `FORM` is found.
+
+* `RESULT-TYPE`
+
+   A symbol indicating the type of result that should be returned from
+   `WALK-FORM`:
+
+   * `LIST`
+
+      The new form, built out of replacing each subform with the
+      result returned by `FN`, is returned. This is the default.
+
+   * `NIL`
+
+      No new form is constructed, meaning the return value of `FN` is
+      used only to determine which forms to walk next.
+
+Returns the new transformed form, if `RESULT-TYPE` is `LIST`.
+
 ## Type Deduction Logic
 
 This section contains notes on how types are deduced for various
