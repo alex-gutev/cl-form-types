@@ -259,7 +259,7 @@
          for var in operands by #'cddr
          do
            (unless (symbolp var)
-             (error 'malformed-form-error :from (cons 'cl:setq operands)))
+             (error 'malformed-form-error :form (cons 'cl:setq operands)))
 
            (when (symbol-macro? var)
              (setf setf? t)))
