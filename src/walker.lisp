@@ -225,12 +225,6 @@
      (with-result (result (walk-form% form env))
        `(cl:return-from ,name ,result)))))
 
-(defmethod walk-list-form ((operator (eql 'cl:the)) operands env)
-  (match-form operands
-    ((list type form)
-     (with-result (result (walk-form% form env))
-       `(cl:the ,type ,result)))))
-
 (defmethod walk-list-form ((operator (eql 'cl:tagbody)) operands env)
   (flet ((walk-form (form)
 	   (typecase form
@@ -278,6 +272,12 @@
             ,@(loop
                  for (var form) on operands by #'cddr
                  append (list var (walk-form% form env))))))))
+
+(defmethod walk-list-form ((operator (eql 'cl:the)) operands env)
+  (match-form operands
+    ((list type form)
+     (with-result (result (walk-form% form env))
+       `(cl:the ,type ,result)))))
 
 
 ;;; Function forms
