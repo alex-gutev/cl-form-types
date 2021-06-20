@@ -32,6 +32,11 @@
   ((form :initarg :form
 	 :reader form))
 
+  (:report
+   (lambda (e s)
+     (with-slots (form) e
+       (format s "Encountered a malformed form while code-walking:~%~2T~s" form))))
+
   (:documentation
    "Condition signalling that a form passed to FORM-TYPE is malformed."))
 
@@ -41,6 +46,12 @@
 
    (operands :initarg :operands
 	     :reader operands))
+
+  (:report
+   (lambda (e s)
+     (with-slots (operator operands) e
+       (format s "Encountered an unknown special operator ~s, with operands:~%~2T~s"
+               operator operands))))
 
   (:documentation
    "Condition representing that an special operator was encountered
