@@ -4,14 +4,8 @@ This library provides functions for determining the value types of
 Common Lisp forms, based on type information contained in the
 environment.
 
-Currently the types of the following forms can be determined:
-
-* Literal values
-* Symbols naming variables for which there are `TYPE` declarations
-* Symbols naming constants
-* Lists where the `CAR` is a function for which there is an `FTYPE`
-  declaration
-* `THE` forms
+In order for this library to work the values types of variables and
+return types of functions have to be declared.
 
 Macros and symbol-macros are fully expanded and all special
 forms, except `CATCH`, are supported.
@@ -31,14 +25,14 @@ Function `FORM-TYPE FORM ENV &KEY CONSTANT-EQL-TYPES EXPAND-COMPILER-MACROS`
 
 Determine the type of a form in a given environment.
 
-* `FORM` - The form of which to determine the type
-* `ENV` - The environment in which the form is found
+* `FORM` - The form of which to determine the type.
+* `ENV` - The environment in which the form is found.
 * `CONSTANT-EQL-TYPES` - If true an `EQL` type specifier is returned
   for all forms which evaluate to constant values. Otherwise (the
   default) an `EQL` type specifier is returned only for those forms
   which evaluate to a constant comparable with `EQL`.
 * `EXPAND-COMPILER-MACROS` - If true compiler-macros are expanded in
-  FORM and its subforms before determining form types.
+  `FORM` and its subforms before determining the form type.
 
 Returns the type specifier of the value to which `FORM` evaluates. If
 `FORM` evaluates to multiple values a `(VALUES ...)` type is
@@ -51,15 +45,15 @@ Function `NTH-FORM-TYPE FORM ENV &OPTIONAL (N 0) CONSTANT-EQL-TYPES EXPAND-COMPI
 
 Determine the type of the nth return value of a form.
 
-* `FORM` - The form of which to determine the type
-* `ENV` - The environment in which the form is found
+* `FORM` - The form of which to determine the type.
+* `ENV` - The environment in which the form is found.
 * `N` - Index of the value, type of which, to return
 * `CONSTANT-EQL-TYPES` - If true an `EQL` type specifier is returned
   for all forms which evaluate to constant values. Otherwise (the
   default) an `EQL` type specifier is returned only for those forms
   which evaluate to a constant comparable with `EQL`.
 * `EXPAND-COMPILER-MACROS` - If true compiler-macros are expanded in
-  FORM and its subforms before determining form types.
+  `FORM` and its subforms before determining the form type.
 
 Returns the type specifier of the `N`th value returned by `FORM`. If
 `FORM` returns less values than `N`, `NIL` is returned.
@@ -84,14 +78,14 @@ Function `FORM-TYPES FORMS ENV &KEY CONSTANT-EQL-TYPES EXPAND-COMPILER-MACROS`
 
 Determine the type of each form in a list.
 
-* `FORMS` - List of forms of which to determine the types
-* `ENV` - Environment in which the forms are found
+* `FORMS` - List of forms of which to determine the types.
+* `ENV` - Environment in which the forms are found.
 * `CONSTANT-EQL-TYPES` - If true an `EQL` type specifier is returned
   for all forms which evaluate to constant values. Otherwise (the
   default) an `EQL` type specifier is returned only for those forms
   which evaluate to a constant comparable with `EQL`.
 * `EXPAND-COMPILER-MACROS` - If true compiler-macros are expanded in
-  FORM and its subforms before determining form types.
+  `FORMS` and their subforms before determining the form types.
 
 Returns a list where each element is the type specifier of the
 corresponding form in `FORMS`.
