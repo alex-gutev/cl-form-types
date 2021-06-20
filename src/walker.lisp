@@ -241,7 +241,7 @@
   (declare (ignore env))
 
   (destructuring-bind (form &optional read-only-p) operands
-    (with-result (result (walk-form% form nil))
+    (with-result (result (walk-form% form env))
       `(cl:load-time-value ,result ,read-only-p))))
 
 (defmethod walk-list-form ((operator (eql 'cl:quote)) operands env)
