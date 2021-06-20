@@ -272,7 +272,7 @@
           `(cl:setq
             ,@(loop
                  for (var form) on operands by #'cddr
-                 collect (list var (walk-form% form env))))))))
+                 append (list var (walk-form% form env))))))))
 
 
 ;;; Function forms
