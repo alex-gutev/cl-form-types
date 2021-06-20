@@ -27,17 +27,6 @@
 
 (in-package :cl-form-types)
 
-(define-constant +cl-special-forms+
-    '(cl:block cl:catch cl:eval-when cl:flet cl:function
-      cl:go cl:if cl:labels cl:let cl:let* cl:load-time-value
-      cl:locally cl:macrolet cl:multiple-value-call cl:multiple-value-prog1
-      cl:progn cl:progv cl:quote cl:return-from cl:setq cl:symbol-macrolet
-      cl:tagbody cl:the cl:throw cl:unwind-protect)
-
-  :test #'equal
-  :documentation
-  "List of standard common lisp special forms")
-
 (defvar *block-name* nil
   "The name of the BLOCK of which the type is currently being
    determined.")
@@ -58,125 +47,84 @@
     ((list* (and (type symbol) name)
 	    (and (type proper-list) forms))
 
-     (let ((*block-name* name)
-	   (*in-block* t)
-	   (*local-fns* nil))
+     (flet ((combine (type1 &optional (type2 nil type2-sp))
+	      (if type2-sp
+		  (combine-values-types 'or type1 type2)
+		  type1)))
 
-       (flet ((combine (type1 &optional (type2 nil type2-sp))
-		(if type2-sp
-		    (combine-values-types 'or type1 type2)
-		    type1)))
-
-	 (-<> (walk-forms forms env)
-	      (remove-duplicates :test #'equal)
-	      (reduce #'combine <> :initial-value (form-type% (lastcar forms) env))))))))
+       (-<> (extract-return-from-types name `(progn ,@forms) env)
+	    (remove-duplicates :test #'equal)
+	    (reduce #'combine <> :initial-value (form-type% (lastcar forms) env)))))))
 
 
 ;;; Code Walking
 
-(defun walk-forms (forms env &optional types)
-  "Extract the types of (RETURN-FROM *BLOCK-NAME* ...) from a list of forms.
+(defvar *block-types* nil
+  "List containing the list of value types returned by the current
+   BLOCK form.")
 
-   The types of the result forms of all RETURN-FROM forms, to the
-   block with name *BLOCK-NAME*, located with FORMS, or subforms of,
-   are extracted and returned.
+(defun extract-return-from-types (name form env)
+  "Extract the list of value types returned by a BLOCK form.
 
-   If *IN-BLOCK* is NIL only the type of RETURN-FROM forms located in
-   locally defined functions, store in the ALIST *LOCAL-FNS*, that are
-   called are returned.
+   *BLOCK-NAME* is the label naming the block.
 
-   FORMS is the list of forms to walk.
+   FORM is a PROGN form representing the block body.
 
-   ENV is the environment in which the forms are found.
+   ENV is the environment in which the BLOCK form is contained.
 
-   TYPES is a list of type specifiers, which is appended to the list
-   returned by the function.
+   Returns the list of value types which may be returned from the
+   BLOCK form by an explicit RETURN-FROM form."
 
-   Returns a list of type specifiers."
+  (let ((*block-name* name)
+        (*block-types*)
+        (*in-block* t)
+        (*local-fns* nil))
+    (block-type-walk-form form env)
+    *block-types*))
 
-  (reduce
-   (lambda (&optional types form)
-     (walk-form form env types))
+(defun block-type-walk-form (form env)
+  "Walk a subform of a BLOCK form and extract the value types returned
+   from the block by RETURN-FROM."
 
-   forms
-   :initial-value types))
+  (labels ((walk (form env)
+             (match form
+               ((list* operator operands)
+                (block-type-walk-list-form operator operands env))
 
-(defun walk-form (form env types)
-  "Extract RETURN-FROM value types from a form (and its subforms)
+               (_ form))))
 
-   FORM is the form.
+    (walk-form #'walk form env :result-type nil)))
 
-   ENV is the environment in which the form is found.
-
-   TYPES is a list of type specifiers, which is appended to the
-   returned list.
-
-   Returns a list of type specifiers."
-
-  (match (macroexpand form env)
-    ((list* op (and (type proper-list) args))
-     (walk-list-form op args env types))
-
-    (_ types)))
-
-(defgeneric walk-list-form (operator operands env types)
+(defgeneric block-type-walk-list-form (operator operands env)
   (:documentation
-   "Extract RETURN-FROM value types from a function call expression.
+   "Extract RETURN-FROM types from a function call expression form
+    appearing within a BLOCK form."))
 
-    OPERATOR is the expression operator.
+(defmethod block-type-walk-list-form (operator operands env)
+  (when (symbolp operator)
+    (when (and (special-operator-p operator)
+	       (not (member operator +cl-special-forms+)))
 
-    OPERANDS is the expression operand list.
+      (error 'unknown-special-operator
+	     :operator operator
+	     :operands operands))
 
-    ENV is the environment in which the form is found.
+    (appendf *block-types* (cdr (assoc operator *local-fns*))))
 
-   TYPES is a list of type specifiers, which is appended to the
-   returned list.
-
-   Returns a list of type specifiers."))
-
-(defmethod walk-list-form (operator operands env types)
-  (match operator
-    ((list* 'cl:lambda def)
-     (->> (walk-fn-def def env types)
-	  (walk-forms operands env)))
-
-    (_
-     (when (and (special-operator-p operator)
-		(not (member operator +cl-special-forms+)))
-
-       (error 'unknown-special-operator
-	      :operator operator
-	      :operands operands))
-
-     (->> (cdr (assoc operator *local-fns*))
-	  (append types)
-	  (walk-forms operands env)))))
+  (cons operator operands))
 
 
-;;; Grouping Forms
+;;; Walker Methods for Special Forms
 
-(defmethod walk-list-form ((operator (eql 'cl:block)) operands env types)
+(defmethod block-type-walk-list-form ((operator (eql 'cl:block)) operands env)
   (match-form operands
-    ((list* name forms)
+    ((list* (and (type symbol) name) forms)
      (let ((*in-block* (not (eq name *block-name*))))
-       (walk-forms forms env types)))))
+       (values
+        (block-type-walk-form `(progn ,@forms) env)
+        t)))))
 
-(defmethod walk-list-form ((operator (eql 'cl:eval-when)) operands env types)
-  (match-form operands
-    ((list* _ forms)
-     (walk-forms forms env types))))
-
-(defmethod walk-list-form ((operator (eql 'cl:locally)) operands env types)
-  (walk-body operands env types))
-
-
-;;; Control flow forms
-
-(defmethod walk-list-form ((operator (eql 'cl:go)) operands env types)
-  (declare (ignore operands env))
-  types)
-
-(defmethod walk-list-form ((operator (eql 'cl:return-from)) operands env types)
+(defmethod block-type-walk-list-form ((operator (eql 'cl:return-from)) operands env)
   "Method for RETURN-FROM forms.
 
    If the block name is equal to *BLOCK-NAME* and *IN-BLOCK* is true,
@@ -184,70 +132,33 @@
    well as the types of any nested RETURN-FROM forms."
 
   (match-form operands
-    ((list name result)
-     (-<>> (when (and *in-block* (eq name *block-name*))
-	     (form-type% result env))
+    ((list (and (type symbol) name) result)
+     (when (and *in-block* (eq name *block-name*))
+       (push (form-type% result env) *block-types*))
 
-	   (cons <> types)
-	   (walk-form result env)))))
+     (cons operator operands))))
 
-(defmethod walk-list-form ((operator (eql 'cl:the)) operands env types)
-  (match-form operands
-    ((list _ form)
-     (walk-form form env types))))
-
-(defmethod walk-list-form ((operator (eql 'cl:tagbody)) operands env types)
-  (flet ((walk-form (types form env)
-	   (typecase form
-	     (symbol types)
-	     (otherwise
-	      (walk-form form env types)))))
-
-    (reduce (rcurry #'walk-form env) operands :initial-value types)))
-
-
-;;; Other special forms
-
-(defmethod walk-list-form ((operator (eql 'cl:load-time-value)) operands env types)
+(defmethod block-type-walk-list-form ((operator (eql 'cl:load-time-value)) operands env)
   (declare (ignore operands env))
 
-  ;; Does nothing, since LOAD-TIME-VALUE forms since they are
-  ;; evaluated in a null lexical environment anyway.
+  ;; Does nothing, since LOAD-TIME-VALUE forms are evaluated in a null
+  ;; lexical environment, therefore they cannot RETURN-FROM to the
+  ;; BLOCK.
 
-  types)
+  (values nil t))
 
-(defmethod walk-list-form ((operator (eql 'cl:quote)) operands env types)
-  (declare (ignore operands env))
-  types)
+(defmethod block-type-walk-list-form ((operator (eql 'cl:function)) operands env)
+  (match operands
+    ((list (and (or (type symbol) (list 'cl:setf _)) name))
+     (appendf *block-types* (cdr (assoc name *local-fns*)))))
 
-(defmethod walk-list-form ((operator (eql 'cl:setq)) operands env types)
-  (nlet process ((types types)
-		 (operands operands))
+  (cons operator operands))
 
-    (match-form operands
-      (nil types)
 
-      ((list* (type symbol) form rest)
-       (process (walk-form form env types) rest)))))
+;;; Function Definition Forms
 
-
-;;; Function forms
-
-(defmethod walk-list-form ((operator (eql 'cl:function)) operands env types)
-  (match-form operands
-    ((list (list* 'cl:lambda def))
-     (walk-fn-def def env types))
-
-    ((list name)
-     (append types (cdr (assoc name *local-fns*))))))
-
-
-;;; Walking function definition forms
-
-(defmethod walk-list-form ((operator (eql 'cl:flet)) operands env types)
-  (flet ((extract-function (binding)
-	   "Extract the function name from a definition."
-
+(defmethod block-type-walk-list-form ((operator (eql 'cl:flet)) operands env)
+  (flet ((function-name (binding)
 	   (match-form binding
 	     ((list* (and (type symbol) name) _)
 	      name))))
@@ -256,16 +167,18 @@
       ((list* (and (type proper-list) functions)
 	      body)
 
-       (let* ((names (mapcar #'extract-function functions))
-	      (ftypes (mapcar (rcurry #'walk-local-fn env nil) functions))
+       (let* ((names (mapcar #'function-name functions))
+	      (ftypes (mapcar (rcurry #'block-type-walk-local-fn env) functions))
 	      (*local-fns* (append ftypes *local-fns*)))
 
-	 (walk-body body env types :function names))))))
+         (values
+          (->> (augment-environment env :function names)
+               (block-type-walk-form `(cl:locally ,@body)))
 
-(defmethod walk-list-form ((operator (eql 'cl:labels)) operands env types)
-  (flet ((extract-function (binding)
-	   "Extract the function name from a definition."
+          t))))))
 
+(defmethod block-type-walk-list-form ((operator (eql 'cl:labels)) operands env)
+  (flet ((function-name (binding)
 	   (match-form binding
 	     ((list* (and (type symbol) name) _)
 	      name))))
@@ -274,12 +187,14 @@
       ((list* (and (type proper-list) functions)
 	      body)
 
-       (let* ((names (mapcar #'extract-function functions))
+       (let* ((names (mapcar #'function-name functions))
 	      (env (augment-environment env :function names))
 	      (ftypes (local-function-types names functions env))
 	      (*local-fns* (append ftypes *local-fns*)))
 
-	 (walk-body body env types :function names))))))
+         (values
+          (block-type-walk-form `(cl:locally ,@body) env)
+          t))))))
 
 (defun local-function-types (names functions env)
   "Determine the types of the RETURN-FROM forms in lexical functions.
@@ -300,7 +215,7 @@
 
 	      (append *local-fns*))))
 
-     (mapcar (rcurry #'walk-local-fn env nil) functions))))
+     (mapcar (rcurry #'block-type-walk-local-fn env) functions))))
 
 (defun subst-local-function-types (ftypes)
   "Substitute (CALL ...) types with actual types returned by the function.
@@ -343,7 +258,7 @@
 	      (process (cdr fns)))
 	  ftypes))))
 
-(defun walk-local-fn (def env types)
+(defun block-type-walk-local-fn (def env)
   "Extract RETURN-FROM value types from a local named function definition.
 
    DEF is the list containing the function definition, with the first
@@ -351,213 +266,11 @@
 
    ENV is the environment in which the form is found.
 
-   TYPES is a list of type specifiers, which is appended to the
-   returned list.
+   Returns the list of value types which may be returned when the
+   function is called."
 
-   Returns a list of type specifiers."
+  (let ((*block-types* nil))
+    (destructuring-bind (name &rest def) def
+      (block-type-walk-form `#'(cl:lambda ,@def) env)
 
-  (match-form def
-    ((list* (and (type symbol) name) def)
-     (cons name (walk-fn-def def env types)))))
-
-(defun walk-fn-def (def env types)
-  "Extract RETURN-FROM value types from a function definition.
-
-   DEF is the list containing the function definition, with the first
-   element being the function's lambda-list.
-
-   ENV is the environment in which the form is found.
-
-   TYPES is a list of type specifiers, which is appended to the
-   returned list.
-
-   Returns a list of type specifiers."
-
-  (match-form def
-    ((list* (and (type proper-list) lambda-list)
-	    (and (type proper-list) body))
-
-     (multiple-value-bind (types variables)
-	 (walk-lambda-list lambda-list env types)
-
-       (walk-body body env types :variable variables :documentation t)))))
-
-(defun walk-lambda-list (list env types)
-  "Extract RETURN-FROM value types from an ordinary lambda list.
-
-   LIST is the lambda-list.
-
-   ENV is the environment in which the function definition is found.
-
-   TYPES is a list of type specifiers, which is appended to the
-   returned list.
-
-   Returns two values:
-
-     1. List of type specifiers
-
-     2. List of variable names"
-
-  (labels ((walk-args (args env types)
-	     (if args
-		 (destructuring-bind (spec &rest args) args
-		   (multiple-value-bind (types env)
-		       (walk-arg spec env types)
-
-		     (walk-args args env types)))
-
-		 (values types env)))
-
-	   (walk-arg (spec env types)
-	     (ematch spec
-	       ((or (list (list _ name) init sp)
-		    (list name init sp)
-		    (list name init))
-
-		(values
-		 (walk-form init env types)
-		 (augment-environment
-		  env
-		  :variable (list* name (ensure-list sp))))))))
-
-    (multiple-value-bind (required optional rest key allow-other-keys aux)
-	(parse-ordinary-lambda-list list)
-
-      (declare (ignore allow-other-keys))
-
-      (multiple-value-bind (types env)
-	  (walk-args optional (augment-environment env :variable required) types)
-
-	(multiple-value-bind (types env)
-	    (walk-args key (augment-environment env :variable (ensure-list rest)) types)
-
-	  (let ((types (walk-args aux env types)))
-	    (values
-	     types
-
-	     (append
-	      required
-	      (mapcar #'ensure-car optional)
-	      (ensure-list rest)
-	      (mapcar #'cadar key)
-	      (mapcar #'ensure-car aux)))))))))
-
-(defun walk-body (body env types &key variable function symbol-macro macro documentation)
-  "Extract RETURN-FROM value types from the body of an environment-modifying form.
-
-   BODY is the list of containing form's body. The first element of
-   the list may be a DECLARE expression.
-
-   ENV is the environment of the form body. This excludes declaration
-   information in DECLARE expressions located in BODY.
-
-   TYPES is a list of type specifiers, which is appended to the
-   returned list.
-
-   DOCUMENTATION is a flag for whether BODY may contain documentation
-   strings (true).
-
-   The remaining keyword arguments are additional arguments to pass to
-   AUGMENT-ENVIRONMENT on environment ENV.
-
-   Returns a list of type specifiers."
-
-  (multiple-value-bind (forms decl)
-      (parse-body body :documentation documentation)
-
-    (let ((env (augment-environment
-		env
-		:variable variable
-		:function function
-		:symbol-macro symbol-macro
-		:macro macro
-		:declare (mappend #'cdr decl))))
-      (walk-forms forms env types))))
-
-
-;;; Variable Binding Forms
-
-(defmethod walk-list-form ((operator (eql 'cl:let)) operands env types)
-  (flet ((extract-init (binding)
-	   (match binding
-	     ((list _ init)
-	      (list init))))
-
-	 (extract-var (binding)
-	   "Extract the variable name from a binding."
-
-	   (match-form binding
-	     ((or (and (type symbol) variable)
-		  (list* (and (type symbol) variable) _))
-
-	      variable))))
-
-   (match-form operands
-     ((list* (and (type proper-list) bindings)
-	     body)
-
-      (walk-body
-       body
-       env
-       (walk-forms (mappend #'extract-init bindings) env types)
-       :variable (mapcar #'extract-var bindings))))))
-
-(defmethod walk-list-form ((operator (eql 'cl:let*)) operands env types)
-  (labels ((walk-bindings (bindings env &optional types)
-	     (if bindings
-		 (destructuring-bind (binding &rest rest) bindings
-		   (->> (walk-binding binding env types)
-			(walk-bindings
-			 rest
-			 (augment-environment env :variable (list (extract-var binding))))))
-
-		 types))
-
-	   (walk-binding (binding env types)
-	     (match binding
-	       ((list _ init)
-		(walk-form init env types))))
-
-	   (extract-var (binding)
-	     "Extract the variable name from a binding."
-
-	     (match-form binding
-	       ((or (and (type symbol) variable)
-		    (list* (and (type symbol) variable) _))
-
-		variable))))
-
-    (match-form operands
-      ((list* (and (type proper-list) bindings)
-	      body)
-
-
-       (walk-body body env (walk-bindings bindings env)
-		  :variable (mapcar #'extract-var bindings))))))
-
-
-;;; Lexcial Macro Forms
-
-(defmethod walk-list-form ((operator (eql 'cl:macrolet)) operands env types)
-  (flet ((make-macro (def)
-	   (match-form def
-	     ((list* (and (type symbol) name)
-		     (and (type proper-list) lambda-list)
-		     (and (type proper-list) body))
-
-	      (list name (enclose-macro name lambda-list body env))))))
-
-    (match-form operands
-      ((list* (and (type proper-list) macros)
-	      (and (type proper-list) body))
-
-       (walk-body body env types
-		  :macro (mapcar #'make-macro macros))))))
-
-(defmethod walk-list-form ((operator (eql 'cl:symbol-macrolet)) operands env types)
-  (match-form operands
-    ((list* (and (type proper-list) symbol-macros)
-	    (and (type proper-list) body))
-
-     (walk-body body env types
-		:symbol-macro symbol-macros))))
+      (cons name *block-types*))))

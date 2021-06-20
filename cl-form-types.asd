@@ -34,7 +34,8 @@
 		:serial t
 		:components
 		((:file "package")
-		 (:file "form-types")
+                 (:file "form-types")
+		 (:file "walker")
 		 (:file "block-types")
 		 (:file "cl-functions"))))
 
