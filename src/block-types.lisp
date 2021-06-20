@@ -101,8 +101,6 @@
     appearing within a BLOCK form."))
 
 (defmethod block-type-walk-list-form (operator operands env)
-  (declare (ignore env))
-
   (when (symbolp operator)
     (when (and (special-operator-p operator)
 	       (not (member operator +cl-special-forms+))
