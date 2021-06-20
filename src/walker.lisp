@@ -288,6 +288,24 @@
      (with-result (result (walk-fn-def def env))
        `#'(cl:lambda ,@result)))
 
+    #+clisp
+    ((list name (list* 'cl:lambda def))
+     (with-result (result (walk-local-fn (cons name def) env))
+       (destructuring-bind (name . def) result
+         `(function ,name (cl:lambda ,@def)))))
+
+    #+ecl
+    ((list (list* 'ext:lambda-block name def))
+     (with-result (result (walk-local-fn (cons name def) env))
+       (destructuring-bind (name . def) result
+         `(function (ext:lambda-block ,name ,@def)))))
+
+    #+abcl
+    ((list (list* 'system:named-lambda name def))
+     (with-result (result (walk-local-fn (cons name def) env))
+       (destructuring-bind (name . def) result
+         `(function (system:named-lambda ,name ,@def)))))
+
     ((list name)
      `#',name)))
 
@@ -573,3 +591,47 @@
 (defmethod walk-list-form ((operator (eql 'sb-int:named-lambda)) operands env)
   (with-result (result (walk-local-fn operands env))
     `(sb-int:named-lambda ,@result)))
+
+
+;;; CCL specific forms
+
+#+ccl
+(defmethod walk-list-form ((operator (eql 'ccl::nfunction)) operands env)
+  (match-form operands
+    ((list name (list* 'cl:lambda def))
+     (with-result (result (walk-local-fn (cons name def) env))
+       (destructuring-bind (name . def) result
+         `(ccl::nfunction ,name (cl:lambda ,@def)))))))
+
+#+ccl
+(defmethod walk-list-form ((operator (eql 'ccl::compiler-let)) operands env)
+  (match-form operands
+    ((list* bindings body)
+     (with-result (result (walk-forms body env))
+       `(ccl::compiler-let ,bindings ,@result)))))
+
+
+;;; ECL specific forms
+
+#+ecl
+(defmethod walk-list-form ((operator (eql 'cl:multiple-value-bind)) operands env)
+  "ECL has a buggy macroexpansion for MULTIPLE-VALUE-BIND which
+   results in an error at runtime if more/less values are returned
+   than expected."
+
+  (match-form operands
+    ((list* (and (type proper-list) vars) form body)
+     (let ((form (walk-form% form env)))
+       (with-result (result (walk-body body env :variable vars))
+         `(cl:multiple-value-bind ,vars ,form
+            ,@result))))))
+
+
+;;; Clisp specific forms
+
+#+clisp
+(defmethod walk-list-form ((operator (eql 'system::function-macro-let)) operands env)
+  (match-form operands
+    ((list* (and (type proper-list) fns) body)
+     (with-result (result (walk-body body env :function (mapcar #'first fns)))
+       `(system::function-macro-let ,fns ,@result)))))
