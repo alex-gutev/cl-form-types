@@ -173,7 +173,7 @@
 
      (let ((operator (walk-fn-def def env)))
        (with-result (result (walk-forms operands env))
-         `(,operator ,@result))))
+         `((cl:lambda ,@operator) ,@result))))
 
     ((type symbol)
      (when (and (special-operator-p operator)
@@ -369,9 +369,12 @@
                 for arg in args
                 for (new-arg names) =
                   (multiple-value-list (walk-arg arg env))
-                collect new-arg
+                collect new-arg into new-args
                 do
-                  (setf env (augment-environment env :variable names))))
+                  (setf env (augment-environment env :variable names))
+
+                finally
+                  (return (values new-args env))))
 
 	   (walk-arg (spec env)
 	     (ematch spec
