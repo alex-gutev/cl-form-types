@@ -105,7 +105,8 @@
 
   (when (symbolp operator)
     (when (and (special-operator-p operator)
-	       (not (member operator +cl-special-forms+)))
+	       (not (member operator +cl-special-forms+))
+               (null (macro-function operator env)))
 
       (error 'unknown-special-operator
 	     :operator operator

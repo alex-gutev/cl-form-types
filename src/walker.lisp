@@ -144,18 +144,17 @@
 (defun walk-new-form (form env)
   "Walk the subforms in a new form returned by the walk function."
 
-  (multiple-value-bind (form expanded?)
-      (macroexpand-1 form env)
+  (match-form form
+    ((type atom)
+     (multiple-value-bind (form expanded?)
+         (macroexpand-1 form env)
 
-    (if expanded?
-        (walk-form% form env)
+       (if expanded?
+           (walk-form% form env)
+           form)))
 
-        (match-form form
-          ((type atom)
-           form)
-
-          ((list* op (and (type proper-list) args))
-           (walk-list-form op args env))))))
+    ((list* op (and (type proper-list) args))
+     (walk-list-form op args env))))
 
 (defgeneric walk-list-form (operator operands env)
   (:documentation
@@ -176,15 +175,23 @@
          `((cl:lambda ,@operator) ,@result))))
 
     ((type symbol)
-     (when (and (special-operator-p operator)
-		(not (member operator +cl-special-forms+)))
+     (multiple-value-bind (form expanded?)
+         (macroexpand-1 (cons operator operands) env)
 
-       (error 'unknown-special-operator
-	      :operator operator
-	      :operands operands))
+       (cond
+         (expanded?
+          (walk-form% form env))
 
-     (with-result (result (walk-forms operands env))
-       `(,operator ,@result)))))
+         (t
+          (when (and (special-operator-p operator)
+		     (not (member operator +cl-special-forms+)))
+
+            (error 'unknown-special-operator
+	           :operator operator
+	           :operands operands))
+
+          (with-result (result (walk-forms operands env))
+            `(,operator ,@result))))))))
 
 
 ;;; Grouping Forms
