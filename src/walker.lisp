@@ -551,3 +551,25 @@
 
      (with-result (result (walk-body body env :symbol-macro symbol-macros))
        `(cl:symbol-macrolet ,symbol-macros ,@result)))))
+
+
+;;; SBCL specific forms
+
+#+sbcl
+(defmethod walk-list-form ((operator (eql 'sb-ext:truly-the)) operands env)
+  (match-form operands
+    ((list type form)
+     (with-result (result (walk-form% form env))
+       `(cl:the ,type ,result)))))
+
+#+sbcl
+(defmethod walk-list-form ((operator (eql 'sb-kernel:the*)) operands env)
+  (match-form operands
+    ((list type form)
+     (with-result (result (walk-form% form env))
+       `(cl:the ,type ,result)))))
+
+#+sbcl
+(defmethod walk-list-form ((operator (eql 'sb-int:named-lambda)) operands env)
+  (with-result (result (walk-local-fn operands env))
+    `(sb-int:named-lambda ,@result)))
