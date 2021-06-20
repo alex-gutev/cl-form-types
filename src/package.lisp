@@ -42,29 +42,6 @@
 	   :unknown-special-operator
 	   :return-default-type)
 
-  (:documentation
-   "Exports utilities for determining the types of common lisp
-    forms, based on information found in the environment."))
-
-(defpackage :cl-form-types
-  (:use :cl-environments-cl
-	:agutil
-	:alexandria
-	:anaphora
-	:optima
-	:arrows)
-
-  (:export :form-types
-	   :form-type
-	   :nth-form-type
-	   :nth-value-type
-	   :custom-form-type
-           :*handle-sb-lvars*
-
-	   :malformed-form-error
-	   :unknown-special-operator
-	   :return-default-type)
-
   (:intern :walk-form)
 
   (:documentation
