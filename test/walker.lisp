@@ -846,7 +846,7 @@
 (test walk-let
   "Test walking LET forms"
 
-  (is-walk ((let ((x 1)
+  (is-walk ((cl:let ((x 1)
                   (a-symbol-macro (1+ x))
                   y
                   (z a-symbol-macro))
@@ -855,7 +855,7 @@
               (pass-form (pprint x))
               a-symbol-macro)
 
-            (let ((x 1)
+            (cl:let ((x 1)
                   (a-symbol-macro (1+ x))
                   (y)
                   (z some-symbol))
@@ -864,7 +864,7 @@
               (pprint x)
               a-symbol-macro))
 
-    (let ((x 1)
+    (cl:let ((x 1)
           (a-symbol-macro (1+ x))
           y
           (z a-symbol-macro))
@@ -886,7 +886,7 @@
 (test walk-let*
   "Test walking LET* forms"
 
-  (is-walk ((let* ((x 1)
+  (is-walk ((cl:let* ((x 1)
                    (a-symbol-macro (1+ x))
                    y
                    (z a-symbol-macro))
@@ -896,7 +896,7 @@
               (pass-form (pprint x))
               a-symbol-macro)
 
-            (let* ((x 1)
+            (cl:let* ((x 1)
                    (a-symbol-macro (1+ x))
                    (y)
                    (z a-symbol-macro))
@@ -906,7 +906,7 @@
               (pprint x)
               a-symbol-macro))
 
-    (let* ((x 1)
+    (cl:let* ((x 1)
            (a-symbol-macro (1+ x))
            y
            (z a-symbol-macro))
