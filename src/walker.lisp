@@ -315,7 +315,7 @@
 (defmethod walk-list-form ((operator (eql 'cl:flet)) operands env)
   (flet ((function-name (binding)
 	   (match-form binding
-	     ((list* (and (type symbol) name) _)
+	     ((list* (and (type function-name) name) _)
 	      name))))
 
     (match-form operands
@@ -330,7 +330,7 @@
 (defmethod walk-list-form ((operator (eql 'cl:labels)) operands env)
   (flet ((function-name (binding)
 	   (match-form binding
-	     ((list* (and (type symbol) name) _)
+	     ((list* (and (type function-name) name) _)
 	      name))))
 
     (match-form operands
@@ -352,7 +352,7 @@
    ENV the environment in which to walk the definition."
 
   (match-form def
-    ((list* (and (type symbol) name) def)
+    ((list* (and (type function-name) name) def)
      (cons name (walk-fn-def def env)))))
 
 (defun walk-fn-def (def env)

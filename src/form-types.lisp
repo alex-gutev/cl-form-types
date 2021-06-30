@@ -28,6 +28,13 @@
 
 (in-package :cl-form-types)
 
+;;; Types
+
+(deftype function-name ()
+  `(or symbol (cons (eql cl:setf) (cons symbol null))))
+
+;;; Conditions
+
 (define-condition malformed-form-error (program-error)
   ((form :initarg :form
 	 :reader form))
@@ -65,6 +72,8 @@
 
   (invoke-restart 'return-default-type type))
 
+;;; Utilities
+
 (defmacro with-default-type-restart (&body forms)
   "Evaluate forms in a RESTART-CASE with the RETURN-DEFAULT-TYPE
    restart established."
@@ -82,6 +91,8 @@
        ,@clauses
        (,whole
 	(error 'malformed-form-error :form ,whole)))))
+
+;;; Global Flags
 
 (defvar *constant-eql-types* nil
   "Flag for whether EQL type specifiers should be returned for all constant forms.
@@ -103,6 +114,8 @@
 
    If NIL LVARS as treated as literal constant and an EQL type or LVAR
    is returned, depending on the value of*CONSTANT-EQL-TYPES*.")
+
+;;; FORM-TYPE functions
 
 (defun form-types (forms env &key ((:constant-eql-types *constant-eql-types*)) ((:expand-compiler-macros *expand-compiler-macros*)))
   "Determines the type of each form in FORMS.
@@ -1001,7 +1014,7 @@
 	   "Extract the function name from a definition."
 
 	   (match-form binding
-	     ((list* (and (type symbol) name) _)
+	     ((list* (and (type function-name) name) _)
 	      (list name)))))
 
     (match-form operands

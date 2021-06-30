@@ -56,6 +56,9 @@
 	    (remove-duplicates :test #'equal)
 	    (reduce #'combine <> :initial-value (form-type% (lastcar forms) env)))))))
 
+(defun local-function-type (name)
+  (cdr (assoc name *local-fns* :test #'equal)))
+
 
 ;;; Code Walking
 
@@ -152,8 +155,8 @@
   (declare (ignore env))
 
   (match operands
-    ((list (and (or (type symbol) (list 'cl:setf _)) name))
-     (appendf *block-types* (cdr (assoc name *local-fns*)))))
+    ((list (and (type function-name) name))
+     (appendf *block-types* (local-function-type name))))
 
   (cons operator operands))
 
@@ -163,7 +166,7 @@
 (defmethod block-type-walk-list-form ((operator (eql 'cl:flet)) operands env)
   (flet ((function-name (binding)
 	   (match-form binding
-	     ((list* (and (type symbol) name) _)
+	     ((list* (and (type function-name) name) _)
 	      name))))
 
     (match-form operands
@@ -183,7 +186,7 @@
 (defmethod block-type-walk-list-form ((operator (eql 'cl:labels)) operands env)
   (flet ((function-name (binding)
 	   (match-form binding
-	     ((list* (and (type symbol) name) _)
+	     ((list* (and (type function-name) name) _)
 	      name))))
 
     (match-form operands
@@ -250,7 +253,7 @@
 
 	   (replace-call (type fn types)
 	     (match type
-	       ((list 'call (eql fn))
+	       ((list 'call (equal fn))
 		types)
 
 	       (_ (list type)))))
