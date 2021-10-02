@@ -282,6 +282,9 @@
 
 ;;; Function forms
 
+(defmethod walk-list-form ((operator (eql 'cl:lambda)) operands env)
+  `(lambda ,@(walk-fn-def operands env)))
+
 (defmethod walk-list-form ((operator (eql 'cl:function)) operands env)
   (match-form operands
     ((list (list* 'cl:lambda def))
