@@ -578,14 +578,14 @@
   (match-form operands
     ((list type form)
      (with-result (result (walk-form% form env))
-       `(cl:the ,type ,result)))))
+       `(sb-ext:truly-the ,type ,result)))))
 
 #+sbcl
 (defmethod walk-list-form ((operator (eql 'sb-kernel:the*)) operands env)
   (match-form operands
     ((list type form)
      (with-result (result (walk-form% form env))
-       `(cl:the ,type ,result)))))
+       `(sb-kernel:the* ,type ,result)))))
 
 #+sbcl
 (defmethod walk-list-form ((operator (eql 'sb-int:named-lambda)) operands env)
