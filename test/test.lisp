@@ -74,7 +74,7 @@
 		  `',(multiple-value-list (progn ,@forms))))
        (,expand))))
 
-(defmacro is-form-type (type &body (form &key strict expand-compiler-macros (test 'form-type=)) &environment env)
+(defmacro is-form-type (type &body (form &key strict expand-compiler-macros (test 'form-type=) (n 0)) &environment env)
   "Check that a form is of a given type, by FORM-TYPE, in its environment.
 
    TYPE (not evaluated) is the expected form type, which is be
@@ -90,10 +90,13 @@
    If EXPAND-COMPILER-MACROS is true, FORM-TYPE is called with
    :EXPAND-COMPILER-MACROS T.
 
+   :N is the index of the value (in a form returning multiple values)
+   of which to determine the type. By default this is 0.
+
    If TEST is given, that function is used to compare the types rather
    than FORM-TYPE=."
 
-  (let ((form-type (nth-form-type form env 0 nil expand-compiler-macros)))
+  (let ((form-type (nth-form-type form env n nil expand-compiler-macros)))
     `(is (,(if strict 'equal test)
 	   ',type
 	   ',form-type)

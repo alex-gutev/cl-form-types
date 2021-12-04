@@ -62,7 +62,12 @@
 
   (is-form-type (and number (eql 5)) (the number 5))
   (is-form-type (and number (eql 10))
-    (the (values number &optional integer) 10)))
+    (the (values number &optional integer) 10))
+
+  (is-form-type string (the string (values "" 1.0)))
+  (is-form-type (and t (eql 1.0))
+    (the string (values "" 1.0))
+    :n 1))
 
 (test (macro-the-forms :compile-at :run-time)
   "Test FORM-TYPE on macros which expand to THE forms"

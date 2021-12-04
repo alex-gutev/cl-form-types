@@ -369,7 +369,7 @@
 	 :allow-other-keys allow-other-keys
 	 :other rest-list)))))
 
-(defun combine-values-types (combinator type1 type2)
+(defun combine-values-types (combinator type1 type2 &optional default-type)
   "Combine two type specifier using a combinator keyword.
 
    If both types are a VALUES types, each corresponding value type is
@@ -384,6 +384,13 @@
    COMBINATOR is the symbol naming the combinator.
 
    TYPES1 and TYPES2 are the types to combine.
+
+   DEFAULT-TYPE is the type used when combining the values type
+   specifier with more value types. When the all the value types in
+   the specifier with less values, are combined with value types from
+   the specifier with more values, the remaining extra values are
+   combined with DEFAULT-TYPE, unless the shorter values type
+   specifier also specifies a &REST type.
 
    Returns the combined type specifier."
 
@@ -400,7 +407,8 @@
 	     ;; SPEC1 has fewer types than SPEC2
 
 	     (with-accessors ((types1 values-type-spec-types)
-			      (rest-type values-type-spec-rest-type))
+			      (rest-type values-type-spec-rest-type)
+                              (rest-p values-type-spec-rest-p))
 		 spec1
 
 	       (with-accessors ((types2 values-type-spec-types))
@@ -409,7 +417,7 @@
 		 (->
 		  (append
 		   (mapcar (curry #'list combinator) types1 types2)
-		   (mapcar (curry #'list combinator rest-type)
+		   (mapcar (curry #'list combinator (if rest-p rest-type default-type))
 			   (subseq types2 (length types1))))
 
 		  (add-optional-keyword spec1 spec2)
@@ -797,7 +805,7 @@
 (defmethod special-form-type ((operator (eql 'cl:the)) operands env)
   (match-form operands
     ((list type value-form)
-     (combine-values-types 'and type (form-type% value-form env)))))
+     (combine-values-types 'and type (form-type% value-form env) t))))
 
 ;;;; LOAD-TIME-VALUE
 
