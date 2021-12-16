@@ -152,7 +152,7 @@
 
 (defmethod custom-form-type ((first (eql 'values)) args env)
   (values `(values ,@(loop :for form :in args
-                           :collect (form-type form env)))
+                           :collect (nth-form-type form env)))
           t))
 
 (defmethod custom-form-type ((first (eql 'coerce)) arguments env)

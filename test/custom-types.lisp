@@ -121,3 +121,19 @@
       (is-form-type t
 	(coerce)
 	:strict t))))
+
+(test (values :compile-at :run-time)
+  "Test FORM-TYPE on VALUES forms"
+
+  (flet ((bar (x)
+           (declare (ignore x))
+           (list 1 2 3 4)))
+    (declare (ftype (function * (values &rest number)) bar))
+
+    (is-form-type string
+      (values "" (bar x)))
+
+    (is-form-type number
+      (values "" (bar x))
+
+      :n 1)))
