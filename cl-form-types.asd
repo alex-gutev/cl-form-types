@@ -45,7 +45,8 @@
 	       #:anaphora
 	       #:optima
 	       #:arrows
-	       #:introspect-environment)
+           #:introspect-environment
+           (:feature :extensible-compound-types "extensible-compound-types"))
 
   :in-order-to ((asdf:test-op (asdf:test-op :cl-form-types/test))))
 

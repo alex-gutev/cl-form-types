@@ -569,9 +569,12 @@
    ENV is the environment in which the variable is found."
 
   (flet ((get-vtype (decl)
-	   (aif (assoc 'type decl)
-		(cdr it)
-		t)))
+           (aif #-extensible-compound-types
+                (assoc 'cl:type decl)
+                #+extensible-compound-types
+                (assoc 'extensible-compound-types:extype decl)
+                (cdr it)
+                t)))
 
     (multiple-value-bind (type local decl)
 	(variable-information variable (when *use-local-declared-types* env))
@@ -748,8 +751,12 @@
 		 (declare (ignore local))
 
 		 (or
-		  (when (member var-type '(:lexical :special))
-		    (cdr (assoc 'type declarations)))
+          (when (member var-type '(:lexical :special))
+
+            #-extensible-compound-types
+            (cdr (assoc 'cl:type declarations))
+            #+extensible-compound-types
+            (cdr (assoc 'extensible-compound-types:extype declarations)))
 
 		  '*)))
 
