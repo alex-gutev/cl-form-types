@@ -776,16 +776,16 @@
 	    (parse-body body :documentation nil)
 
 	  (let ((env (augment-environment
-		      env
+                      env
 		      :variable
-		      (append required
-			      (mappend #'optional-vars optional)
-			      (ensure-list rest)
-			      (mappend #'key-vars key)
-			      (mapcar #'cdr aux))
+                      (append required
+                              (mappend #'optional-vars optional)
+                              (ensure-list rest)
+                              (mappend #'key-vars key)
+                              (mapcar #'car aux))
 
-		      :declare
-		      (mappend #'cdr declarations))))
+                      :declare
+                      (mappend #'cdr declarations))))
 
 	    `(function
 
