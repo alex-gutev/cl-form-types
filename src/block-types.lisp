@@ -136,6 +136,14 @@
    well as the types of any nested RETURN-FROM forms."
 
   (match-form operands
+
+    ((list (and (type symbol) name))
+     (let ((result nil))
+       (when (and *in-block* (eq name *block-name*))
+         (push (form-type% result env) *block-types*)))
+
+     (cons operator operands))
+
     ((list (and (type symbol) name) result)
      (when (and *in-block* (eq name *block-name*))
        (push (form-type% result env) *block-types*))
