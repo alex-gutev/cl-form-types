@@ -416,7 +416,15 @@
 
 		 (->
 		  (append
-		   (mapcar (curry #'list combinator) types1 types2)
+           (mapcar (lambda (type1 type2)
+                     (let ((combined (list combinator type1 type2)))
+                       (cond ((subtypep type1 combined)
+                              type1)
+                             ((subtypep type2 combined)
+                              type2)
+                             (t
+                              combined))))
+                   types1 types2)
 		   (mapcar (curry #'list combinator (if rest-p rest-type default-type))
 			   (subseq types2 (length types1))))
 
