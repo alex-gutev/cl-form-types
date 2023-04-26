@@ -418,10 +418,12 @@
 		  (append
            (mapcar (lambda (type1 type2)
                      (let ((combined (list combinator type1 type2)))
-                       (cond ((and (subtypep type1 combined)
+                       (cond ((and (not (type= nil type1))
+                                   (subtypep type1 combined)
                                    (subtypep type1 type2))
                               type1)
-                             ((and (subtypep type2 combined)
+                             ((and (not (type= nil type2))
+                                   (subtypep type2 combined)
                                    (subtypep type2 type1))
                               type2)
                              (t
