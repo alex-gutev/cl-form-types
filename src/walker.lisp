@@ -221,6 +221,9 @@
 
 (defmethod walk-list-form ((operator (eql 'cl:return-from)) operands env)
   (match-form operands
+    ((list (and (type symbol) name))
+     (with-result (result nil)
+       `(cl:return-from ,name ,result)))
     ((list (and (type symbol) name) form)
      (with-result (result (walk-form% form env))
        `(cl:return-from ,name ,result)))))
