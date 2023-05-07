@@ -416,7 +416,15 @@
 
 		 (->
 		  (append
-		   (mapcar (curry #'list combinator) types1 types2)
+           (mapcar (lambda (type1 type2)
+                     (let ((combined (list combinator type1 type2)))
+                       (cond ((type= combined type1)
+                              type1)
+                             ((type= combined type2)
+                              type2)
+                             (t
+                              combined))))
+                   types1 types2)
 		   (mapcar (curry #'list combinator (if rest-p rest-type default-type))
 			   (subseq types2 (length types1))))
 
@@ -481,7 +489,7 @@
        (list* 'values (combine (list type1) types2)))
 
       ((_ _)
-       (list combinator type1 type2)))))
+       (first (combine (list type1) (list type2)))))))
 
 
 ;;; Basic Form Types

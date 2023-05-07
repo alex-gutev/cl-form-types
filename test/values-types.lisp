@@ -65,11 +65,11 @@
 (test combine-simple-types
   "Test combining two simple types (no VALUES specifiers)"
 
-  (is (equal
-       '(and integer (eql 10))
+  (is (type=
+       '(eql 10)
        (combine-values-types 'and 'integer '(eql 10))))
 
-  (is (equal
+  (is (type=
        '(or number character)
        (combine-values-types 'or 'number 'character))))
 
