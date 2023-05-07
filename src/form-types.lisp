@@ -418,13 +418,9 @@
 		  (append
            (mapcar (lambda (type1 type2)
                      (let ((combined (list combinator type1 type2)))
-                       (cond ((and (not (type= nil type1))
-                                   (subtypep type1 combined)
-                                   (subtypep type1 type2))
+                       (cond ((type= combined type1)
                               type1)
-                             ((and (not (type= nil type2))
-                                   (subtypep type2 combined)
-                                   (subtypep type2 type1))
+                             ((type= combined type2)
                               type2)
                              (t
                               combined))))
@@ -493,7 +489,7 @@
        (list* 'values (combine (list type1) types2)))
 
       ((_ _)
-       (list combinator type1 type2)))))
+       (first (combine (list type1) (list type2)))))))
 
 
 ;;; Basic Form Types
