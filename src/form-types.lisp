@@ -759,7 +759,7 @@
 		  (when (member var-type '(:lexical :special))
 		    (cdr (assoc 'type declarations)))
 
-		  '*)))
+		  t)))
 
 	     (optional-var-type (optional env)
 	       (var-type (first optional) env))
@@ -775,7 +775,7 @@
 		 ((list 'cons type _)
 		  type)
 
-		 (_ '*))))
+		 (_ t))))
 
       (multiple-value-bind (required optional rest key allow-other-keys aux has-key-p)
 	  (parse-ordinary-lambda-list lambda-list)

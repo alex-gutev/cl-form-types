@@ -27,7 +27,7 @@
   :description "Library for determining types of Common Lisp forms."
   :author "Alexander Gutev"
   :license  "MIT"
-  :version "0.3.1"
+  :version "0.3.2"
   :serial t
   :components ((:module
 		"src"
