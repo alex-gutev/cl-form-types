@@ -158,7 +158,7 @@
 (test (function-lambda-optional-forms :compile-at :run-time)
   "Test FORM-TYPE on FUNCTION with LAMBDA expression with optional arguments"
 
-  (is-form-type (function (string &optional number *) (values string &optional))
+  (is-form-type (function (string &optional number t) (values string &optional))
     (lambda (name &optional (age 0) thing)
       (declare (type string name)
 	       (type number age))
@@ -198,7 +198,7 @@
 
 	(num (+ x y)))))
 
-  (is-form-type (function (number &rest * &key (:key *) &allow-other-keys) number)
+  (is-form-type (function (number &rest t &key (:key *) &allow-other-keys) number)
     (lambda (x &rest z &key key &allow-other-keys)
       (declare (type number x))
 
