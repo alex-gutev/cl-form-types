@@ -447,6 +447,23 @@
               (mappend #'cddr key)
               (mapcar #'car aux)))))))))
 
+(defun vars-and-funs-from-decl (decl)
+  (let ((vars ())
+        (funs ()))
+    (dolist (decl decl)
+      (match decl
+        ((list* decl-name vars-or-funs)
+         (when (member decl-name '(#+sbcl sb-int:truly-dynamic-extent))
+           (dolist (var-or-fun vars-or-funs)
+             (match var-or-fun
+               ((list 'cl:function name)
+                (pushnew name funs))
+               (_
+                (pushnew var-or-fun vars))))))
+        (_
+         nil)))
+    (values vars funs)))
+
 (defun walk-body (body env &key variable function symbol-macro macro documentation)
   "Walk the body of a form which modifies the lexical environment.
 
@@ -467,13 +484,16 @@
   (multiple-value-bind (forms decl docstring)
       (parse-body body :documentation documentation)
 
-    (let ((env (augment-environment
-        	env
-        	:variable variable
-        	:function function
-        	:symbol-macro symbol-macro
-        	:macro macro
-        	:declare (mappend #'cdr decl))))
+    (let ((env (let ((decl (mappend #'cdr decl)))
+                 (multiple-value-bind (more-vars more-funs)
+                     (vars-and-funs-from-decl decl)
+                   (augment-environment
+                    env
+                    :variable (append variable more-vars)
+                    :function (append function more-funs)
+                    :symbol-macro symbol-macro
+                    :macro macro
+                    :declare decl)))))
 
       (with-result (result (walk-forms forms env))
         (append
