@@ -138,17 +138,27 @@
                   `(simple-string ,length))))))
    t))
 
-(defmethod custom-form-type ((first (eql 'aref)) form env)
-  (let ((element-type (introspect-environment:typexpand (form-type form env))))
-    (if (listp element-type)
-        (values (second element-type) t)
-        (values t nil))))
+(defmethod custom-form-type ((first (eql 'aref)) args env)
+  (let ((form-type (introspect-environment:typexpand (form-type (first args) env))))
+    (match form-type
+      ((list* (or 'cl:array 'cl:simple-array) element-type _)
+       (values (case element-type
+                 (cl:* t)
+                 (t element-type))
+               t))
+      (_
+       (values t nil)))))
 
-(defmethod custom-form-type ((first (eql 'row-major-aref)) form env)
-  (let ((element-type (introspect-environment:typexpand (form-type form env))))
-    (if (listp element-type)
-        (values (second element-type) t)
-        (values t nil))))
+(defmethod custom-form-type ((first (eql 'row-major-aref)) args env)
+  (let ((form-type (introspect-environment:typexpand (form-type (first args) env))))
+    (match form-type
+      ((list* (or 'cl:array 'cl:simple-array) element-type _)
+       (values (case element-type
+                 (cl:* t)
+                 (t element-type))
+               t))
+      (_
+       (values t nil)))))
 
 (defmethod custom-form-type ((first (eql 'values)) args env)
   (values `(values ,@(loop :for form :in args
