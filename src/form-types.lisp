@@ -813,7 +813,11 @@
 (defmethod special-form-type ((operator (eql 'cl:the)) operands env)
   (match-form operands
     ((list type value-form)
-     (combine-values-types 'and type (form-type% value-form env) t))))
+     #-ccl
+     (combine-values-types 'and type (form-type% value-form env) t)
+     ;;; On CCL, CL:AREF has a compiler macro that can lead to stackoverflow.
+     #+ccl
+     type)))
 
 ;;;; LOAD-TIME-VALUE
 
