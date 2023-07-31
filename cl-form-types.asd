@@ -37,7 +37,8 @@
                  (:file "form-types")
 		 (:file "walker")
 		 (:file "block-types")
-		 (:file "cl-functions"))))
+         (:file "cl-functions")
+         (:file "blacklist"))))
 
   :depends-on (#:cl-environments
 	       #:agutil

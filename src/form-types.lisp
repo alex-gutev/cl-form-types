@@ -106,6 +106,12 @@
   "Flag for whether compiler-macros should be expanded prior to
    determining form types.")
 
+(defvar *expand-compiler-macros-blacklist* nil
+  "A list of symbols whose compiler macros should not be used for
+   expansion. This may be useful because some implementations
+   provide compiler macros which expand into their parent forms,
+   resulting in infinite expansions.")
+
 (defvar *handle-sb-lvars* nil
   "Flag for whether SBCL `SB-C::LVAR' structures should be recognized.
 
@@ -560,10 +566,17 @@
    Returns the compiler-macro-expanded form or NIL if there is no
    compiler-macro for OPERATOR."
 
-  (when-let* ((fn (and *expand-compiler-macros*
-		       (compiler-macro-function operator env)))
+  (when-let* ((fn (if (and *expand-compiler-macros*
+                           (compiler-macro-function operator env)
 
-	      (form (funcall fn (cons operator arguments) env)))
+                           (not (member operator
+                                        *expand-compiler-macros-blacklist*
+                                        ;; OPERATORs can be lists
+                                        :test #'equal)))
+                      (compiler-macro-function operator env)
+                      nil))
+
+              (form (funcall fn (cons operator arguments) env)))
 
     (unless (equal form (cons operator arguments))
       form)))
