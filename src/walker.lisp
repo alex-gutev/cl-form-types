@@ -453,7 +453,7 @@
     (dolist (decl decl)
       (match decl
         ((list* decl-name vars-or-funs)
-         (when (member decl-name '(#+sbcl sb-int:truly-dynamic-extent))
+         (when (member decl-name '(#+cl-environments-truly-dynamic-extent sb-int:truly-dynamic-extent))
            (dolist (var-or-fun vars-or-funs)
              (match var-or-fun
                ((list 'cl:function name)
