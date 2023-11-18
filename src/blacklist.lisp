@@ -1,4 +1,4 @@
-;;;; package.lisp
+;;;; form-types.lisp
 ;;;;
 ;;;; Copyright 2021 Alexander Gutev <alex.gutev@mail.bg>
 ;;;;
@@ -23,39 +23,10 @@
 ;;;; FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 ;;;; OTHER DEALINGS IN THE SOFTWARE.
 
-(defpackage :cl-form-types
-  (:use :cl-environments-cl
-	:agutil
-	:alexandria
-	:anaphora
-	:optima
-	:arrows)
+;;;; Functions for obtaining the types of forms based on the type
+;;;; information stored in the environment.
 
-  (:export :form-types
-	   :form-type
-	   :nth-form-type
-	   :nth-value-type
-	   :custom-form-type
-           :*handle-sb-lvars*
+(in-package :cl-form-types)
 
-	   :malformed-form-error
-	   :unknown-special-operator
-       :return-default-type
-       :*expand-compiler-macros-blacklist*)
-
-  (:intern :walk-form)
-
-  (:documentation
-   "Exports utilities for determining the types of common lisp
-    forms, based on information found in the environment."))
-
-(defpackage :cl-form-types.walker
-  (:use)
-
-  (:import-from :cl-form-types
-                :walk-form)
-
-  (:export :walk-form)
-
-  (:documentation
-   "Export code-walker used internally for type analysis."))
+#+ccl
+(push 'cl:aref *expand-compiler-macros-blacklist*)
