@@ -308,7 +308,7 @@
 (defun numeric-op-form-type (op args env)
   (let ((arg-types (mapcar (lambda (arg)
                              (introspect-environment:typexpand
-                              (form-type arg env)
+                              (nth-form-type arg env 0)
                               env))
                            args)))
     (multiple-value-bind (all-eql-p values)
