@@ -46,9 +46,9 @@
 (in-suite math-operations)
 
 
-;;; Tests
+;;; + function
 
-(test (math+-same-types :compile-at :run-time)
+(test (+-same-types :compile-at :run-time)
   "Test FORM-TYPE on (+ ...) forms with arguments of same type"
 
   (let ((a 1) (b 2) (c 3))
@@ -78,7 +78,7 @@
       (+ (the double-float a) (the double-float b) (the double-float c))
       :strict t)))
 
-(test (math+-different-types :compile-at :run-time)
+(test (+-different-types :compile-at :run-time)
   "Test FORM-TYPE on (+ ...) forms with arguments of different type"
 
   (let ((a 1) (b 2) (c 3))
@@ -102,4 +102,245 @@
 
     (is-form-type number
       (+ (the rational a) (the float b) (the double-float c))
+      :strict t)))
+
+
+;;; - function
+
+(test (minus-same-types :compile-at :run-time)
+  "Test FORM-TYPE on (- ...) forms with arguments of same type"
+
+  (let ((a 1) (b 2) (c 3))
+    (declare (ignorable a b c))
+
+    (is-form-type integer
+      (- (the fixnum a) (the fixnum b) (the fixnum c))
+      :strict t)
+
+    (is-form-type integer
+      (- (the integer a) (the integer b) (the integer c))
+      :strict t)
+
+    (is-form-type rational
+      (- (the rational a) (the rational b) (the rational c))
+      :strict t)
+
+    (is-form-type float
+      (- (the float a) (the float b) (the float c))
+      :strict t)
+
+    (is-form-type single-float
+      (- (the single-float a) (the single-float b) (the single-float c))
+      :strict t)
+
+    (is-form-type double-float
+      (- (the double-float a) (the double-float b) (the double-float c))
+      :strict t)))
+
+(test (minus-different-types :compile-at :run-time)
+  "Test FORM-TYPE on (- ...) forms with arguments of different type"
+
+  (let ((a 1) (b 2) (c 3))
+    (declare (ignorable a b c))
+
+    (is-form-type integer
+      (- (the fixnum a) (the fixnum b) (the integer c))
+      :strict t)
+
+    (is-form-type rational
+      (- (the integer a) (the rational b) (the integer c))
+      :strict t)
+
+    (is-form-type float
+      (- (the float a) (the single-float b) (the double-float c))
+      :strict t)
+
+    (is-form-type float
+      (- (the double-float a) (the single-float b) (the single-float c))
+      :strict t)
+
+    (is-form-type number
+      (- (the rational a) (the float b) (the double-float c))
+      :strict t)))
+
+
+;;; * function
+
+(test (*-same-types :compile-at :run-time)
+  "Test FORM-TYPE on (* ...) forms with arguments of same type"
+
+  (let ((a 1) (b 2) (c 3))
+    (declare (ignorable a b c))
+
+    (is-form-type integer
+      (* (the fixnum a) (the fixnum b) (the fixnum c))
+      :strict t)
+
+    (is-form-type integer
+      (* (the integer a) (the integer b) (the integer c))
+      :strict t)
+
+    (is-form-type rational
+      (* (the rational a) (the rational b) (the rational c))
+      :strict t)
+
+    (is-form-type float
+      (* (the float a) (the float b) (the float c))
+      :strict t)
+
+    (is-form-type single-float
+      (* (the single-float a) (the single-float b) (the single-float c))
+      :strict t)
+
+    (is-form-type double-float
+      (* (the double-float a) (the double-float b) (the double-float c))
+      :strict t)))
+
+(test (*-different-types :compile-at :run-time)
+  "Test FORM-TYPE on (* ...) forms with arguments of different type"
+
+  (let ((a 1) (b 2) (c 3))
+    (declare (ignorable a b c))
+
+    (is-form-type integer
+      (* (the fixnum a) (the fixnum b) (the integer c))
+      :strict t)
+
+    (is-form-type rational
+      (* (the integer a) (the rational b) (the integer c))
+      :strict t)
+
+    (is-form-type float
+      (* (the float a) (the single-float b) (the double-float c))
+      :strict t)
+
+    (is-form-type float
+      (* (the double-float a) (the single-float b) (the single-float c))
+      :strict t)
+
+    (is-form-type number
+      (* (the rational a) (the float b) (the double-float c))
+      :strict t)))
+
+
+;;; / function
+
+(test (/-same-types :compile-at :run-time)
+  "Test FORM-TYPE on (/ ...) forms with arguments of same type"
+
+  (let ((a 1) (b 2) (c 3))
+    (declare (ignorable a b c))
+
+    (is-form-type rational
+      (/ (the fixnum a) (the fixnum b) (the fixnum c))
+      :strict t)
+
+    (is-form-type rational
+      (/ (the integer a) (the integer b) (the integer c))
+      :strict t)
+
+    (is-form-type rational
+      (/ (the rational a) (the rational b) (the rational c))
+      :strict t)
+
+    (is-form-type float
+      (/ (the float a) (the float b) (the float c))
+      :strict t)
+
+    (is-form-type single-float
+      (/ (the single-float a) (the single-float b) (the single-float c))
+      :strict t)
+
+    (is-form-type double-float
+      (/ (the double-float a) (the double-float b) (the double-float c))
+      :strict t)))
+
+(test (/-different-types :compile-at :run-time)
+  "Test FORM-TYPE on (/ ...) forms with arguments of different type"
+
+  (let ((a 1) (b 2) (c 3))
+    (declare (ignorable a b c))
+
+    (is-form-type rational
+      (/ (the fixnum a) (the fixnum b) (the integer c))
+      :strict t)
+
+    (is-form-type rational
+      (/ (the integer a) (the rational b) (the integer c))
+      :strict t)
+
+    (is-form-type float
+      (/ (the float a) (the single-float b) (the double-float c))
+      :strict t)
+
+    (is-form-type float
+      (/ (the double-float a) (the single-float b) (the single-float c))
+      :strict t)
+
+    (is-form-type number
+      (/ (the rational a) (the float b) (the double-float c))
+      :strict t)))
+
+
+
+;;; 1+ and 1- functions
+
+(test (1+ :compile-at :run-time)
+  "Test FORM-TYPE on (1+ ...) forms with arguments of same type"
+
+  (let ((a 1))
+    (declare (ignorable a))
+
+    (is-form-type integer
+      (1+ (the fixnum a))
+      :strict t)
+
+    (is-form-type integer
+      (1+ (the integer a))
+      :strict t)
+
+    (is-form-type rational
+      (1+ (the rational a))
+      :strict t)
+
+    (is-form-type float
+      (1+ (the float a))
+      :strict t)
+
+    (is-form-type single-float
+      (1+ (the single-float a))
+      :strict t)
+
+    (is-form-type double-float
+      (1+ (the double-float a))
+      :strict t)))
+
+(test (1- :compile-at :run-time)
+  "Test FORM-TYPE on (1- ...) forms with arguments of same type"
+
+  (let ((a 1))
+    (declare (ignorable a))
+
+    (is-form-type integer
+      (1- (the fixnum a))
+      :strict t)
+
+    (is-form-type integer
+      (1- (the integer a))
+      :strict t)
+
+    (is-form-type rational
+      (1- (the rational a))
+      :strict t)
+
+    (is-form-type float
+      (1- (the float a))
+      :strict t)
+
+    (is-form-type single-float
+      (1- (the single-float a))
+      :strict t)
+
+    (is-form-type double-float
+      (1- (the double-float a))
       :strict t)))
