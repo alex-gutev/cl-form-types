@@ -48,8 +48,8 @@
 
 ;;; Tests
 
-(test (math+ :compile-at :run-time)
-  "Test FORM-TYPE on (+ ...) forms"
+(test (math+-same-types :compile-at :run-time)
+  "Test FORM-TYPE on (+ ...) forms with arguments of same type"
 
   (let ((a 1) (b 2) (c 3))
     (declare (ignorable a b c))
@@ -59,17 +59,47 @@
       :strict t)
 
     (is-form-type integer
-      (+ (the integer a) (the integer b) (the integer c)))
+      (+ (the integer a) (the integer b) (the integer c))
+      :strict t)
 
     (is-form-type rational
-      (+ (the rational a) (the rational b) (the rational c)))
+      (+ (the rational a) (the rational b) (the rational c))
+      :strict t)
 
     (is-form-type float
       (+ (the float a) (the float b) (the float c))
       :strict t)
 
     (is-form-type single-float
-      (+ (the single-float a) (the single-float b) (the single-float c)))
+      (+ (the single-float a) (the single-float b) (the single-float c))
+      :strict t)
 
     (is-form-type double-float
-      (+ (the double-float a) (the double-float b) (the double-float c)))))
+      (+ (the double-float a) (the double-float b) (the double-float c))
+      :strict t)))
+
+(test (math+-different-types :compile-at :run-time)
+  "Test FORM-TYPE on (+ ...) forms with arguments of different type"
+
+  (let ((a 1) (b 2) (c 3))
+    (declare (ignorable a b c))
+
+    (is-form-type integer
+      (+ (the fixnum a) (the fixnum b) (the integer c))
+      :strict t)
+
+    (is-form-type rational
+      (+ (the integer a) (the rational b) (the integer c))
+      :strict t)
+
+    (is-form-type float
+      (+ (the float a) (the single-float b) (the double-float c))
+      :strict t)
+
+    (is-form-type float
+      (+ (the double-float a) (the single-float b) (the single-float c))
+      :strict t)
+
+    (is-form-type number
+      (+ (the rational a) (the float b) (the double-float c))
+      :strict t)))
