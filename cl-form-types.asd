@@ -66,6 +66,7 @@
 		 (:file "special-forms")
 		 (:file "block-types")
 		 (:file "custom-types")
+                 (:file "math-operations")
                  (:file "walker"))))
 
   :perform (test-op (o s)
